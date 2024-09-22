@@ -2,20 +2,9 @@
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
+  height: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -24,15 +13,45 @@
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.camera-icon {
+  width: 75px;
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out; 
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.camera-icon:hover {
+  transform: scale(1.1);  /* Slightly enlarge the icon on hover */
+  color: #2e7d32;
+}
+
+.trash-icon {
+  width: 75px;
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out; 
+}
+
+.trash-icon:hover {
+  transform: scale(1.1);  /* Slightly enlarge the icon on hover */
+  color: #d2211b;
+}
+
+.file-icon {
+  width: 75px;
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out; 
+}
+
+.file-icon:hover {
+  transform: scale(1.1);  /* Slightly enlarge the icon on hover */
+  color: #2e7d32;
+}
+
+
+
+.preview_image img{
+  width:20%;
+  height: auto;
 }
