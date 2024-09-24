@@ -1,5 +1,9 @@
 import Tesseract from 'tesseract.js';
-import { GlobalWorkerOptions, version, getDocument } from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+//Copied pdf.worker.mjs to public for direct access 
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.mjs`;
+
+
 
 /**
  * Extract text from an image using Tesseract.js
@@ -10,6 +14,8 @@ import { GlobalWorkerOptions, version, getDocument } from 'pdfjs-dist';
 export function extractFromImage(img, language = 'deu') {
   return new Promise((resolve, reject) => {
     const canvas = preprocessImage(img);
+    console.log("TEST");
+    console.log(canvas);
     // Run OCR using Tesseract on the preprocessed image
     Tesseract.recognize(canvas.toDataURL(), language)
       .then(({ data: { text } }) => {
@@ -21,20 +27,53 @@ export function extractFromImage(img, language = 'deu') {
   });
 }
 
-/**
- * Extract text from a PDF using pdfjs-dist
- * @param {File} file - PDF file object
- * @return {Promise<String>} - Promise resolving to extracted text from the first page
- */
-export function extractFromPDF(file) {
-  return "TEEST";
+export async function extractFromPDF(file) {
+  if (!file) return '';
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+      const pdfBytes = event.target.result;
+      try {
+        const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        const textContent = await page.getTextContent();
+
+        const receiptRows = {};
+        let temp_arr = [];
+        let last_transform_height = 0;
+        let key_index = 0;
+        //Items have the attribute: array transform, that has page height --> grouping by that for "rows" of receipt
+        for (let i = 0; i < textContent.items.length; i++) {
+          const item = textContent.items[i];
+          const current_transform_height = item.transform[5];
+      
+          if (current_transform_height !== last_transform_height) {
+              // Add a new key to the receiptRows Dict if the height changes
+              receiptRows[key_index] = temp_arr;
+              last_transform_height = current_transform_height;
+              temp_arr = [];
+              key_index++;
+          }
+      
+          temp_arr.push(item.str);
+        }
+        console.log(receiptRows);
+        resolve(receiptRows);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
 }
 
-/**
- * Preprocesses an image by converting it to grayscale
- * @param {HTMLImageElement} img - Image element to preprocess
- * @return {HTMLCanvasElement} - Processed canvas element
- */
+
+//Preprocesses an image by converting it to grayscale
+
+//Further improvment is needed for good extraction by image
+//Currently not useable --> Focus on PDF extraction
 function preprocessImage(img) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');

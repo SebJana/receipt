@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react';
 import './App.css';
 import { Camera, Trash2, FileText } from 'lucide-react';
+
 import { extractFromImage, extractFromPDF } from './extractTextFromFile';
+import { processReceiptDict } from './processReceipt';
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);  // Store the file object
   const [imageData, setImageData] = useState(null);  // Store the actual image data (Base64 string)
   const [extractedText, setExtractedText] = useState('');  // Store the extracted text
-  const [loading, setLoading] = useState(false);  // Loading state for the OCR process
   const imgInputRef = useRef(null);  // Reference to trigger the image input programmatically
   const pdfInputRef = useRef(null);  // Reference to trigger the PDF input programmatically
 
@@ -25,35 +26,33 @@ function App() {
         img.src = reader.result;
         img.onload = () => {
           setImageData(reader.result);  // Store the image as a Base64 string
-          runExtractionFromFile(img, file);  // Pass the image to the OCR function
+          runExtractionFromFile(img, file);  // Process the img
         };
       };
       reader.readAsDataURL(file);  // Read the file as a data URL
     } else if (type === 'pdf' && file.type === 'application/pdf') {
-      runExtractionFromFile(null, file);  // Process PDF file directly
+      runExtractionFromFile(null, file);  // Process PDF file
     } else {
       alert('Unsupported file type.');
     }
   };
 
   // Handles OCR or PDF text extraction depending on file type
-  const runExtractionFromFile = (img, file) => {
-    setLoading(true);  // Start the loading state
-
+  const runExtractionFromFile = async (img, file) => {
     if (file.type.startsWith('image/')) {
-      extractFromImage(img, 'deu')  // Call the OCR function with German language ('deu')
-        .then((text) => {
-          setExtractedText(text);  // Set the OCR extracted text
-          setLoading(false);  // Stop loading
-        })
-        .catch((err) => {
-          console.error(err);
-          setLoading(false);  // Stop loading on error
-        });
+      try {
+        const text = await extractFromImage(img, 'deu');  // Call the OCR function with German language ('deu')
+        setExtractedText(text);  // Set the OCR extracted text
+      } catch (err) {
+        console.error(err);
+      }
     } else if (file.type === 'application/pdf') {
-      extractFromPDF(file)
-      setExtractedText(extractFromPDF(file));  // Set the text from the first page of the PDF
-      setLoading(false);
+      try {
+        const text_dict = await extractFromPDF(file);  // Wait for the PDF text extraction to finish
+        const receipt = await processReceiptDict(text_dict);
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 
@@ -108,9 +107,6 @@ function App() {
           <img src={imageData} alt="Preview" />
         </div>
       )}
-
-      {/* Display loading message while extraction is processing */}
-      {loading && <p>Processing file for text...</p>}
 
       {/* Display the extracted text */}
       {extractedText && (
