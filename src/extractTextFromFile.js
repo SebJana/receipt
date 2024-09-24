@@ -4,29 +4,6 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.mjs`;
 
 
-
-/**
- * Extract text from an image using Tesseract.js
- * @param {HTMLImageElement} img - Image element to run OCR on
- * @param {String} language - Language code for Tesseract.js (e.g., 'deu' for German)
- * @return {Promise<String>} - Promise resolving to extracted text
- */
-export function extractFromImage(img, language = 'deu') {
-  return new Promise((resolve, reject) => {
-    const canvas = preprocessImage(img);
-    console.log("TEST");
-    console.log(canvas);
-    // Run OCR using Tesseract on the preprocessed image
-    Tesseract.recognize(canvas.toDataURL(), language)
-      .then(({ data: { text } }) => {
-        resolve(text); // Resolve the extracted text
-      })
-      .catch((err) => {
-        reject(err); // Reject the promise if an error occurs
-      });
-  });
-}
-
 export async function extractFromPDF(file) {
   if (!file) return '';
 
@@ -70,10 +47,24 @@ export async function extractFromPDF(file) {
 }
 
 
-//Preprocesses an image by converting it to grayscale
+export function extractFromImage(img, language = 'deu') {
+  return new Promise((resolve, reject) => {
+    const canvas = preprocessImage(img);
+    // Run OCR using Tesseract on the preprocessed image
+    Tesseract.recognize(canvas.toDataURL(), language)
+      .then(({ data }) => {
+        const rows = data.lines.map(line => line.text); // Extract each row (line of text)
 
-//Further improvment is needed for good extraction by image
-//Currently not useable --> Focus on PDF extraction
+        const receiptDict = cleanRows(rows);
+        resolve(receiptDict); // Resolve the rows of text as an array
+        console.log(receiptDict);
+      })
+      .catch((err) => {
+        reject(err); // Reject the promise if an error occurs
+      });
+  });
+}
+
 function preprocessImage(img) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -93,5 +84,24 @@ function preprocessImage(img) {
   }
 
   ctx.putImageData(imageData, 0, 0);
+  
+  // Save the processed image locally
+  // saveImage(canvas);
+
   return canvas; // Return the canvas element
 }
+
+// Helper function to save the image
+function saveImage(canvas) {
+  const dataURL = canvas.toDataURL('image/png');
+  
+  const link = document.createElement('a');
+  link.href = dataURL;
+  link.download = 'perprocessed_image.png'; // Set the download name
+  
+  link.click();
+}
+
+function cleanRows(receiptList){
+  return receiptList;
+};
