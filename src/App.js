@@ -49,7 +49,8 @@ function App() {
     } else if (file.type === 'application/pdf') {
       try {
         const text_dict = await extractFromPDF(file);  // Wait for the PDF text extraction to finish
-        const receipt = await processReceiptDict(text_dict);
+        const receipt = processReceiptDict(text_dict);
+        //Abort
       } catch (err) {
         console.error(err);
       }
@@ -63,10 +64,12 @@ function App() {
   };
 
   const handleCamIconClick = () => {
+    resetFile();
     imgInputRef.current.click();  // Trigger the image file input
   };
 
   const handleFileIconClick = () => {
+    resetFile();
     pdfInputRef.current.click();  // Trigger the PDF file input
   };
 

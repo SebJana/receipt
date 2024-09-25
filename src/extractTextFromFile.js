@@ -5,7 +5,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.m
 
 
 export async function extractFromPDF(file) {
-  if (!file) return '';
+  if (!file) return null;
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -36,7 +36,6 @@ export async function extractFromPDF(file) {
       
           temp_arr.push(item.str);
         }
-        console.log(receiptRows);
         resolve(receiptRows);
       } catch (error) {
         reject(error);
@@ -55,7 +54,7 @@ export function extractFromImage(img, language = 'deu') {
       .then(({ data }) => {
         const rows = data.lines.map(line => line.text); // Extract each row (line of text)
 
-        const receiptDict = cleanRows(rows);
+        const receiptDict = arrToDict(rows);
         resolve(receiptDict); // Resolve the rows of text as an array
         console.log(receiptDict);
       })
@@ -102,6 +101,6 @@ function saveImage(canvas) {
   link.click();
 }
 
-function cleanRows(receiptList){
+function arrToDict(receiptList){
   return receiptList;
 };
