@@ -53,10 +53,8 @@ export function extractFromImage(img, language = 'deu') {
     Tesseract.recognize(canvas.toDataURL(), language)
       .then(({ data }) => {
         const rows = data.lines.map(line => line.text); // Extract each row (line of text)
-
         const receiptDict = arrToDict(rows);
-        resolve(receiptDict); // Resolve the rows of text as an array
-        console.log(receiptDict);
+        resolve(receiptDict); // Resolve the rows of text as an dict
       })
       .catch((err) => {
         reject(err); // Reject the promise if an error occurs
@@ -101,6 +99,18 @@ function saveImage(canvas) {
   link.click();
 }
 
-function arrToDict(receiptList){
-  return receiptList;
+function arrToDict(receiptList) {
+  for (let i = 0; i < receiptList.length; i++) {
+    //Remove all line breaks (\n)
+    receiptList[i] = receiptList[i].replace(/\n/g, ""); 
+    //Split the string into an array
+    receiptList[i] = receiptList[i].split(" ");
+  }
+
+  //Array to Dict
+  const receiptDict = {};
+  for (let i = 0; i < receiptList.length; i++) {
+    receiptDict[i] = receiptList[i];
+  }
+  return receiptDict;
 };

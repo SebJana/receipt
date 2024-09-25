@@ -89,7 +89,7 @@ function extractStore(receiptDict){
             for(let store in possible_stores){
                 //Loop through every possible store identifier
                 for(let j = 0; j < possible_stores[store].length; j++){
-                   if(receiptDict[key][i] === possible_stores[store][j]){
+                   if(receiptDict[key][i].includes(possible_stores[store][j])){
                         return store; 
                    } 
                 }
@@ -124,14 +124,14 @@ function extractDate(receiptDict){
 }
 
 function cutReceipt(receiptDict){
-    const possible_starts = ["EUR", "Preis EUR"];
+    const possible_starts = ["EUR", "Preis EUR", "PREIS", "Preis"];
     const possible_ends = getPossibleEnds();
 
     function getEditIndex(dictToSearch){
         for(let key in receiptDict){
             for(let i = 0; i < receiptDict[key].length; i++){
                 for(let j = 0; j < dictToSearch.length; j++){
-                    if(receiptDict[key][i] === dictToSearch[j]){
+                    if(receiptDict[key][i].includes(dictToSearch[j])){
                         //Only the first occurence
                         return key;
                     }
@@ -175,7 +175,7 @@ function extractSum(receiptDict){
         const possible_ends = getPossibleEnds();
         for(let end of possible_ends){
             for(let str of row){
-                if(str=== end){
+                if(str.includes(end)){
                     return true;
                 }
             }
@@ -199,10 +199,10 @@ function extractSum(receiptDict){
 }
 
 function getPossibleEnds(){
-    return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen"];
+    return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen"];
 }
 
-function getDictLength(dict){
+function getDictLength(dict){ 
     return (Object.keys(dict)).length;
 }
 

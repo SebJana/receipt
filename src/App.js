@@ -8,7 +8,6 @@ import { processReceiptDict } from './processReceipt';
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);  // Store the file object
   const [imageData, setImageData] = useState(null);  // Store the actual image data (Base64 string)
-  const [extractedText, setExtractedText] = useState('');  // Store the extracted text
   const imgInputRef = useRef(null);  // Reference to trigger the image input programmatically
   const pdfInputRef = useRef(null);  // Reference to trigger the PDF input programmatically
 
@@ -41,15 +40,15 @@ function App() {
   const runExtractionFromFile = async (img, file) => {
     if (file.type.startsWith('image/')) {
       try {
-        const text = await extractFromImage(img, 'deu');  // Call the OCR function with German language ('deu')
-        setExtractedText(text);  // Set the OCR extracted text
+        const text_dict_img = await extractFromImage(img, 'deu');  // Call the OCR function with German language ('deu')
+        const receipt_img = processReceiptDict(text_dict_img)
       } catch (err) {
         console.error(err);
       }
     } else if (file.type === 'application/pdf') {
       try {
-        const text_dict = await extractFromPDF(file);  // Wait for the PDF text extraction to finish
-        const receipt = processReceiptDict(text_dict);
+        const text_dict_pdf = await extractFromPDF(file);  // Wait for the PDF text extraction to finish
+        const receipt_pdf = processReceiptDict(text_dict_pdf);
         //Abort
       } catch (err) {
         console.error(err);
@@ -60,7 +59,6 @@ function App() {
   const resetFile = () => {
     setSelectedFile(null);
     setImageData(null);
-    setExtractedText('');  // Clear the extracted text
   };
 
   const handleCamIconClick = () => {
@@ -108,14 +106,6 @@ function App() {
       {imageData && (
         <div className="preview_image">
           <img src={imageData} alt="Preview" />
-        </div>
-      )}
-
-      {/* Display the extracted text */}
-      {extractedText && (
-        <div className="extracted_text">
-          <h3>Extracted Text:</h3>
-          <p>{extractedText}</p>
         </div>
       )}
     </div>
