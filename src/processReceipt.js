@@ -130,6 +130,10 @@ function cutReceipt(receiptDict){
     function getEditIndex(dictToSearch){
         for(let key in receiptDict){
             for(let i = 0; i < receiptDict[key].length; i++){
+                //PDF of Kaufland has EUR at top in "4,33 EUR", not the start tho
+                if (!/^[A-Za-z]+$/.test(receiptDict[key][i])) {
+                    continue; // Skip if element has numbers in it
+                }
                 for(let j = 0; j < dictToSearch.length; j++){
                     if(receiptDict[key][i].includes(dictToSearch[j])){
                         //Only the first occurence
@@ -144,25 +148,28 @@ function cutReceipt(receiptDict){
 
     const start_index = getEditIndex(possible_starts);
     let end_index = getEditIndex(possible_ends);
-
-    // If no start or end is found, return the unmodified receiptDict
-    if (start_index === -1 || end_index === -1) {
-        console.log("No start or end found, returning unmodified receipt.");
-        return receiptDict;
-    }
-
     let tempDict = receiptDict;
-    //Don't remove the Summe row
-    end_index++;
 
-    //Remove every row after the relevant content
-    const iter_length = getDictLength(tempDict)-1;
-    for(let j = end_index; j <= iter_length; j++){
-        delete tempDict[j];
+    console.log(start_index,end_index);
+
+    // if end_index was found
+    if (end_index !== -1) {
+        // Don't remove the Summe row
+        end_index++;
+
+        // Remove every row after the relevant content
+        const iter_length = getDictLength(tempDict) - 1;
+        for (let j = end_index; j <= iter_length; j++) {
+            delete tempDict[j];
+        }
     }
-    //Remove every row before the relevant content
-    for(let i = 0; i <= start_index; i++){
-        delete tempDict[i];
+
+    // if start_index was found
+    if (start_index !== -1) {
+        // Remove every row before the relevant content
+        for (let i = 0; i <= start_index; i++) {
+            delete tempDict[i];
+        }
     }
 
     return tempDict;

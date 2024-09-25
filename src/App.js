@@ -5,6 +5,10 @@ import { Camera, Trash2, FileText } from 'lucide-react';
 import { extractFromImage, extractFromPDF } from './extractTextFromFile';
 import { processReceiptDict } from './processReceipt';
 
+import * as pdfjsLib from 'pdfjs-dist';
+//Copied pdf.worker.mjs to public for direct access 
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.mjs`;
+
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);  // Store the file object
   const [imageData, setImageData] = useState(null);  // Store the actual image data (Base64 string)
@@ -12,28 +16,68 @@ function App() {
   const pdfInputRef = useRef(null);  // Reference to trigger the PDF input programmatically
 
   // Handles both image and PDF input, depending on file type
-  const handleFileChange = (event, type) => {
+  const handleFileChange = async (event, type) => {
     const file = event.target.files[0];
-    if (!file) return;  // Handle the case when no file is selected
-
+    if (!file) return;  //Handle the case when no file is selected
+  
     setSelectedFile(file);
-
+    //Reset the file input value so the same file can be selected again
+    event.target.value = null;
+  
     if (type === 'image' && file.type.startsWith('image/')) {
+      const img = await handleImagePreview(file);  // Warte auf Bildverarbeitung
+      runExtractionFromFile(img, file);  // Extraktion aus Bilddatei starten
+    } else if (type === 'pdf' && file.type === 'application/pdf') {
+      const canvas = await handlePDFPreview(file);  // Warte auf PDF-Verarbeitung
+      runExtractionFromFile(canvas, file);  // Extraktion aus PDF (Canvas) starten
+    } else {
+      alert('Unsupported file type.');
+    }
+  };
+  
+  // Funktion zum Verarbeiten der Bildvorschau (synchron)
+  const handleImagePreview = (file) => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const img = new Image();
         img.src = reader.result;
         img.onload = () => {
-          setImageData(reader.result);  // Store the image as a Base64 string
-          runExtractionFromFile(img, file);  // Process the img
+          setImageData(reader.result);  // Bild als Base64-String speichern
+          resolve(img);  // Rückgabe des Bildes über Promise
         };
       };
-      reader.readAsDataURL(file);  // Read the file as a data URL
-    } else if (type === 'pdf' && file.type === 'application/pdf') {
-      runExtractionFromFile(null, file);  // Process PDF file
-    } else {
-      alert('Unsupported file type.');
-    }
+      reader.readAsDataURL(file);  // Datei als Data URL lesen (für Base64)
+    });
+  };
+  
+  // Funktion zum Verarbeiten der PDF-Vorschau (asynchron)
+  const handlePDFPreview = async (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const pdfData = new Uint8Array(reader.result);  // PDF-Daten als Uint8Array lesen
+  
+        // Verwende PDF.js zur Verarbeitung der PDF-Datei
+        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        const page = await pdf.getPage(1);  // Erste Seite der PDF-Datei
+  
+        const viewport = page.getViewport({ scale: 1.5 });  // Skaliere das Bild für bessere Auflösung
+        const canvas = document.createElement('canvas');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+  
+        const context = canvas.getContext('2d');
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+  
+        // Erzeuge Base64-String aus der gerenderten PDF-Seite
+        const imgData = canvas.toDataURL('image/png');
+        setImageData(imgData);  // Speichere das gerenderte Bild der ersten PDF-Seite als Base64-String
+  
+        resolve(canvas);  // Rückgabe des Canvas über Promise
+      };
+      reader.readAsArrayBuffer(file);  // PDF-Datei als ArrayBuffer lesen
+    });
   };
 
   // Handles OCR or PDF text extraction depending on file type
@@ -102,7 +146,7 @@ function App() {
         {selectedFile && <p>Selected file: {selectedFile.name}</p>}
       </div>
 
-      {/* Display the image preview (only for images) */}
+      {/* Display the preview*/}
       {imageData && (
         <div className="preview_image">
           <img src={imageData} alt="Preview" />
