@@ -3,7 +3,8 @@ export function processReceiptDict(receiptDict){
 
     const store = extractStore(cleanReceiptDict);
     const date = extractDate(cleanReceiptDict);
-    const relevantReceiptDict = cutReceipt(cleanReceiptDict);
+    let relevantReceiptDict = cutReceipt(cleanReceiptDict);
+    relevantReceiptDict = removeKgPriceRows(relevantReceiptDict);
     const receiptSum = extractSum(relevantReceiptDict);
 
     console.log(store);
@@ -11,8 +12,9 @@ export function processReceiptDict(receiptDict){
     console.log(receiptSum);
     console.log(relevantReceiptDict);
     
-    const receipt = new Receipt(store,date,receiptSum);      
-    return "Test";
+    const receipt = new Receipt(store,date,receiptSum);
+
+    return receipt;
 };
 
 class Receipt{
@@ -29,6 +31,9 @@ class Receipt{
     };
     addReceiptItem(item){
         this.receiptItems.push(item);
+    }
+    getId(){
+        return this.id;
     }
 };
 
@@ -68,18 +73,10 @@ function cleanRows(receiptDict){
 
     return receiptDict;
 
-}
+};
 
 function extractStore(receiptDict){
-    const possible_stores = {
-        "Kaufland":["Kaufland","KAUFLAND","KLC","Bergsteig","09621/78260"],
-        "Lidl":["Lidl","LIDL","Barbarastr", "Hirschauer","L4DL","L$DE"],
-        "Netto":["Netto","NETTO","Mosacher","Deutschlandcard","Marken-Discount"],
-        "Edeka":["Edeka","EDEKA","Wiesmeth","Pfistermeisterstr","G&G","Kuhnert"], 
-        //potential Stores
-        "Aldi":["Aldi","ALDI"],
-        "Norma":["Norma","NORMA"]
-    };
+    const possible_stores = getPossibleStores();
     
     //Loop through all Rows of the receipt
     for(let key in receiptDict){
@@ -103,36 +100,48 @@ function extractStore(receiptDict){
 
 function extractDate(receiptDict){
     //Date in the format DD.MM.YY
-    const datePattern = /\b\d{2}[.\-/]\d{2}[.\-/]\d{2}\b/;
-
-    for(let key in receiptDict){
-        //Loop through every word of the row
-        for(let i = 0; i < receiptDict[key].length; i++){
-            //Check if datePattern appears somewhere in the string
+    const datePattern = /\b(\d{2})[.\-/](\d{2})[.\-/](\d{2}|\d{4})\b/;
+    for (let key in receiptDict) {
+        // Loop through every word of the row
+        for (let i = 0; i < receiptDict[key].length; i++) {
+            // Check if datePattern appears somewhere in the string
             const date_text = receiptDict[key][i].match(datePattern);
-            if(date_text){
-                return date_text[0];
+            if (date_text) {
+                // Extract the day, month, and year from the regex match
+                const day = date_text[1];
+                const month = date_text[2];
+                let year = date_text[3];
+
+                // If year is in YY format, convert it to YYYY
+                if (year.length === 2) {
+                    const currentYear = new Date().getFullYear().toString();
+                    const century = currentYear.substring(0, 2); // Get the current century (first two digits of the year)
+                    year = `${century}${year}`;
+                }
+
+                // Format the extracted date as YYYY-MM-DD
+                return `${year}-${month}-${day}`;
             }
         }
     }
 
     //If no date is found on the receipt return the current date
-    const current_date = new Date ();
-    const formatted_date = current_date.toLocaleDateString('de-DE');
+    const current_date = new Date();
+    const formatted_date = current_date.toISOString().split('T')[0]; // Extracts YYYY-MM-DD format
+    console.log(formatted_date);
 
     return formatted_date;
-}
+};
 
 function cutReceipt(receiptDict){
-    const possible_starts = ["EUR", "Preis EUR", "PREIS", "Preis"];
+    const possible_starts = getPossibleStarts();
     const possible_ends = getPossibleEnds();
 
     function getEditIndex(dictToSearch){
         for(let key in receiptDict){
             for(let i = 0; i < receiptDict[key].length; i++){
-                //PDF of Kaufland has EUR at top in "4,33 EUR", not the start tho
-                if (!/^[A-Za-z]+$/.test(receiptDict[key][i])) {
-                    continue; // Skip if element has numbers in it
+                if (!/^[a-zA-Z]+$/.test(receiptDict[key][i])) {
+                    continue; // Skip if the element is not only letters
                 }
                 for(let j = 0; j < dictToSearch.length; j++){
                     if(receiptDict[key][i].includes(dictToSearch[j])){
@@ -149,8 +158,6 @@ function cutReceipt(receiptDict){
     const start_index = getEditIndex(possible_starts);
     let end_index = getEditIndex(possible_ends);
     let tempDict = receiptDict;
-
-    console.log(start_index,end_index);
 
     // if end_index was found
     if (end_index !== -1) {
@@ -176,7 +183,12 @@ function cutReceipt(receiptDict){
 };
 
 function extractSum(receiptDict){
-    const last_row_arr = receiptDict[getMaxDictKey(receiptDict)];
+    const index = getMaxDictKey(receiptDict);
+    if(index === 0){
+        return null;
+    }
+    const last_row_arr = receiptDict[index];
+
 
     function doesRowContainEnd(row){
         const possible_ends = getPossibleEnds();
@@ -203,15 +215,62 @@ function extractSum(receiptDict){
 
     // Default if no sum can be determined
     return null;
+};
+
+function removeKgPriceRows(receiptDict){
+    const remove_keys = [];
+    //Find key index where a "/kg" is in the row
+    for(let key in receiptDict){
+        for(let i = 0; i < receiptDict[key].length; i++){
+            if ((receiptDict[key][i].includes("/kg"))) {
+                remove_keys.push(key);
+            }
+        }
+    }
+    
+    //Delete the rows at the found key
+    for(let i = 0; i < remove_keys.length;i++){
+        delete receiptDict[remove_keys[i]];
+    }
+
+    return receiptDict;
+
+};
+
+function getPossibleStores(){
+    return {
+        "Kaufland":["Kaufland","KAUFLAND","KLC","Bergsteig","09621/78260"],
+        "Lidl":["Lidl","LIDL","Barbarastr", "Hirschauer","L4DL","L$DE"],
+        "Netto":["Netto","NETTO","Mosacher","Deutschlandcard","Marken-Discount"],
+        "Edeka":["Edeka","EDEKA","Wiesmeth","Pfistermeisterstr","G&G","Kuhnert"], 
+        //potential Stores
+        "Aldi":["Aldi","ALDI"],
+        "Norma":["Norma","NORMA"]
+    };
+}
+
+export function getPossibleStoreKeys(){
+    const possible_stores = getPossibleStores();
+    const possible_store_keys = [];
+
+    for(let key in possible_stores){
+        possible_store_keys.push(key);
+    }
+
+    return possible_store_keys;
+}
+
+function getPossibleStarts(){
+    return ["EUR", "Preis EUR", "PREIS", "Preis"];
 }
 
 function getPossibleEnds(){
     return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen"];
-}
+};
 
 function getDictLength(dict){ 
     return (Object.keys(dict)).length;
-}
+};
 
 function convertToNumber(value) {
     // Replace ',' with '.'
@@ -220,13 +279,17 @@ function convertToNumber(value) {
 
     // Did the conversion result in a number?
     return !isNaN(num) ? num : null;
-}
+};
 
 function getMaxDictKey(dict) {
-    // Zuerst alle Schlüssel extrahieren und in Zahlen konvertieren
+    if (!dict || Object.keys(dict).length === 0) {
+        return 0;
+    }
+
+    // Zuerst alle Schlüssel extrahieren und in Zahlen umwandeln
     let maxKey = Object.keys(dict)
         .map(key => Number(key)) // Schlüssel in Zahlen umwandeln
         .reduce((a, b) => a > b ? a : b); // Größten numerischen Schlüssel finden
 
     return maxKey; // Den größten numerischen Schlüssel zurückgeben
-}
+};
