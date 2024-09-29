@@ -1,108 +1,290 @@
-export function processReceiptDict(receiptDict){
+/**
+ * Processes the receipt dictionary and extracts relevant information.
+ * Cleans the rows, identifies the store, extracts the date, 
+ * cuts unnecessary parts, and processes the items and total sum.
+ * @param {Object} receiptDict - The dictionary containing raw receipt data.
+ * @returns {Object} - A Receipt object containing the store, date, sum, and receipt items.
+ * @throws Will throw an error if the receipt text couldn't be extracted or processed.
+ */
+export function processReceiptDict(receiptDict) {
+    if (!receiptDict) {
+        throw new Error('Receipt text couldn’t be extracted');
+    }
+
+    // Step 1: Clean the rows by removing irrelevant data (e.g., ' ' and '' elements)
     const cleanReceiptDict = cleanRows(receiptDict);
 
+    // Step 2: Extract the store name and date from the receipt
     const store = extractStore(cleanReceiptDict);
     const date = extractDate(cleanReceiptDict);
+
+    // Step 3: Extract the relevant part of the receipt (items, prices, etc.)
     let relevantReceiptDict = cutReceipt(cleanReceiptDict);
     relevantReceiptDict = removeKgPriceRows(relevantReceiptDict);
+
+    // Step 4: Extract the total sum from the receipt
     const receiptSum = extractSum(relevantReceiptDict);
 
-    console.log(store);
-    console.log(date);
-    console.log(receiptSum);
-    console.log(relevantReceiptDict);
-    
-    const receipt = new Receipt(store,date,receiptSum);
+    if (!relevantReceiptDict || Object.keys(relevantReceiptDict).length === 0) {
+        throw new Error('Unable to process the receipt.');
+    }
+
+    // Step 5: Create and return a new receipt object
+    const receipt = new Receipt(store, date, receiptSum);
+    receipt.setReceiptItemsDict(relevantReceiptDict);
 
     return receipt;
-};
+}
 
-class Receipt{
-    constructor(store, date, receiptSum){
-        this.id = this.#generateID();
+/**
+ * Processes the receipt items for a given receipt.
+ * Different processing logic can be applied based on the store (e.g., Kaufland, Lidl).
+ * @param {Object} receipt - A Receipt object containing the store, date, and items.
+ */
+export function processReceiptItems(receipt) {
+    const receiptDict = receipt.receiptItemsDict;
+
+    // Remove discount-related rows from the receipt
+    const receiptOnlyItemsDict = removeDiscountRows(receiptDict);
+    console.log(receiptOnlyItemsDict);
+
+    // Process items differently based on the store
+    switch (receipt.store) {
+        case "Kaufland":
+            createReceiptItemsKaufland(receiptOnlyItemsDict);
+            break;
+        case "Lidl":
+            break;
+        default:
+    }
+}
+
+/**
+ * Class representing a receipt.
+ * Contains store, date, sum, receipt items, and a unique ID.
+ */
+class Receipt {
+    constructor(store, date, receiptSum) {
+        this.id = this.#generateID(); // Generate a unique ID
         this.store = store;
         this.date = date;
         this.receiptSum = receiptSum;
-        this.receiptItems = []
+        this.receiptItems = []; // List of ReceiptItem objects
+        this.receiptItemsDict = {}; // Raw dictionary of receipt items
     }
-    #generateID(){
-        //Current unix timestamp in millis as unique id
+
+    // Private method to generate a unique ID based on the current timestamp
+    #generateID() {
         return Date.now();
-    };
-    addReceiptItem(item){
+    }
+
+    setReceiptItem(items) {
+        this.receiptItems = items;
+    }
+
+    addReceiptItem(item) {
         this.receiptItems.push(item);
     }
-    getId(){
+
+    setReceiptItemsDict(dict) {
+        this.receiptItemsDict = dict;
+    }
+
+    getId() {
         return this.id;
     }
-};
+}
 
-function cleanRows(receiptDict){
-    //Remove ' ' and '' from every row start
-    for(let key in receiptDict){
-        for(let i = 0; i < receiptDict[key].length;i++){
-            if(!(receiptDict[key][i] === ' ' || receiptDict[key][i] === '')){
-                break;
+/**
+ * Class representing an item on a receipt.
+ * Each item contains an index, name, price, amount, and optional category.
+ */
+class ReceiptItem {
+    constructor(index, name, price, amount) {
+        this.index = index;
+        this.name = name;
+        this.price = price || 0; // Default price to 0 if unknown
+        this.amount = amount || 0; // Default amount to 0 if unknown
+        this.category = '';
+    }
+
+    // Apply a discount to the price
+    applyDiscount(discount) {
+        this.price = this.price - discount;
+    }
+
+    setCategory(category) {
+        this.category = category;
+    }
+
+    // Get the total price for this item (price * amount)
+    getTotal() {
+        return this.price * this.amount;
+    }
+}
+
+/**
+ * Creates receipt items from the processed Kaufland receipt dictionary.
+ * @param {Object} receiptOnlyItemsDict - Dictionary of receipt items after filtering.
+ */
+function createReceiptItemsKaufland(receiptOnlyItemsDict) {
+    const items = [];
+    let only_name = false; // Flag for name-only rows
+    let last_name = '';
+    let last_key = '';
+
+    for (let key in receiptOnlyItemsDict) {
+        const last_index = receiptOnlyItemsDict[key].length - 1;
+        const last_elem = receiptOnlyItemsDict[key][last_index];
+
+        // Check if the last element is a number and if there is no pending name-only item
+        if (convertToNumber(last_elem) && !only_name) {
+            const name = concatenatItemNameString(receiptOnlyItemsDict[key], last_index);
+            const price = convertToNumber(last_elem);
+            const amount = 1;
+
+            const item = new ReceiptItem(key, name, price, amount);
+            items.push(item);
+            continue; // Move to the next key
+        }
+
+        // Handle name-only rows (no price in the row)
+        if (!convertToNumber(last_elem) && !only_name) {
+            only_name = true;
+            last_name = concatenatItemNameString(receiptOnlyItemsDict[key], last_index);
+            last_key = key;
+            continue;
+        }
+
+        // Handle rows after encountering a name-only row
+        if (only_name) {
+            if (receiptOnlyItemsDict[key].some(item => /\*/.test(item))) {
+                const item = createItemMultipleKaufland(last_key, last_name, receiptOnlyItemsDict[key]);
+                items.push(item);
             }
-            receiptDict[key].splice(i,1);
-             i--; //Adjust index after removal
+            only_name = false; // Reset the flag after processing
         }
     }
 
-    //Remove 'A' and 'B' from every row end
-    for(let key in receiptDict){
-        for(let i = receiptDict[key].length - 1; i >= 0 ;i--){
-            if(!(receiptDict[key][i] === 'A' || receiptDict[key][i] === 'B')){
-                break;
-            }
-            receiptDict[key].splice(i,1);
-             i++; //Adjust index after removal
+    console.log(items);
+}
+
+/**
+ * Creates a receipt item for multiple quantities of an item (Kaufland-specific logic).
+ * @param {string} last_key - The key of the last item.
+ * @param {string} last_name - The name of the last item.
+ * @param {Array} row - The row array representing the item data.
+ * @returns {ReceiptItem} - The created receipt item.
+ */
+function createItemMultipleKaufland(last_key, last_name, row) {
+    const cleanRow = row.filter(item => item !== ' '); // Remove empty spaces
+
+    if (cleanRow.length < 3) {
+        return new ReceiptItem(last_key, last_name, 0, 0); // Default item if row has less than 3 elements
+    }
+
+    const last_index = cleanRow.length - 1;
+
+    if (convertToNumber(cleanRow[last_index]) && convertToNumber(cleanRow[last_index - 1])) {
+        const total_price = convertToNumber(cleanRow[last_index]);
+        const single_price = convertToNumber(cleanRow[last_index - 1]);
+        const amount = total_price / single_price;
+
+        // Check if the amount is an integer and if it's contained in the first element of the row
+        if (Number.isInteger(amount) && cleanRow[0].includes(amount.toString())) {
+            return new ReceiptItem(last_key, last_name, single_price, amount);
+        }
+
+        // If amount is not an integer or not contained in the first element, return item with amount 0
+        return new ReceiptItem(last_key, last_name, single_price, 0);
+    }
+
+    // Default item if no valid numbers are found
+    return new ReceiptItem(last_key, last_name, 0, 0);
+}
+
+/**
+ * Cleans the receipt dictionary by removing unnecessary elements such as ' ' or ''.
+ * Removes elements from the beginning and end of rows, as well as short elements (less than 3 characters).
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - Cleaned receipt dictionary.
+ */
+function cleanRows(receiptDict) {
+    // Remove ' ' and '' from the start of each row
+    for (let key in receiptDict) {
+        for (let i = 0; i < receiptDict[key].length; i++) {
+            if (!(receiptDict[key][i] === ' ' || receiptDict[key][i] === '')) break;
+            receiptDict[key].splice(i, 1);
+            i--; // Adjust index after removal
         }
     }
 
-    //Remove ' ' and '' from every row end
-    for(let key in receiptDict){
-        for(let i = receiptDict[key].length - 1; i >= 0 ;i--){
-            if(!(receiptDict[key][i] === ' ' || receiptDict[key][i] === '')){
-                break;
+    // Remove elements from the end of the row if they have less than 3 digits, 'A', or 'B'
+    for (let key in receiptDict) {
+        for (let i = receiptDict[key].length - 1; i >= 0; i--) {
+            const current_element = receiptDict[key][i];
+            if (receiptDict[key].length === 1) continue; // Skip single-element rows
+            if (current_element === 'A' || current_element === 'B' || current_element.length < 3) {
+                receiptDict[key].splice(i, 1);
+            } else {
+                break; // Stop once a valid element is found
             }
-            receiptDict[key].splice(i,1);
-             i++; //Adjust index after removal
+        }
+    }
+
+    // Remove ' ' and '' from the end of each row
+    for (let key in receiptDict) {
+        for (let i = receiptDict[key].length - 1; i >= 0; i--) {
+            if (!(receiptDict[key][i] === ' ' || receiptDict[key][i] === '')) break;
+            receiptDict[key].splice(i, 1);
+            i++; // Adjust index after removal
         }
     }
 
     return receiptDict;
+}
 
-};
-
-function extractStore(receiptDict){
+/**
+ * Extracts the store name from the receipt.
+ * Matches store identifiers against a list of possible stores.
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {string} - The store name if found, otherwise default to 'Kaufland'.
+ */
+function extractStore(receiptDict) {
     const possible_stores = getPossibleStores();
-    
-    //Loop through all Rows of the receipt
-    for(let key in receiptDict){
-        //Loop through every word of the row
-        for(let i = 0; i < receiptDict[key].length; i++){
-            //Loop through every possible_store
-            for(let store in possible_stores){
-                //Loop through every possible store identifier
-                for(let j = 0; j < possible_stores[store].length; j++){
-                   if(receiptDict[key][i].includes(possible_stores[store][j])){
-                        return store; 
-                   } 
+
+    // Loop through all rows of the receipt
+    for (let key in receiptDict) {
+        // Loop through every word in the row
+        for (let i = 0; i < receiptDict[key].length; i++) {
+            // Loop through every possible store
+            for (let store in possible_stores) {
+                // Loop through every possible store identifier
+                for (let j = 0; j < possible_stores[store].length; j++) {
+                    if (receiptDict[key][i].includes(possible_stores[store][j])) {
+                        return store; // Return store if found
+                    }
                 }
             }
         }
     }
-    //No store matched
-    return null;
 
-};
+    // Default store if no match is found (User has to confirm)
+    return "Kaufland";
+}
 
-function extractDate(receiptDict){
-    //Date in the format DD.MM.YY
+/**
+ * Extracts the date from the receipt.
+ * Searches for date patterns (DD.MM.YY or DD.MM.YYYY) in the receipt.
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {string} - The extracted date in YYYY-MM-DD format, or the current date if none found.
+ */
+function extractDate(receiptDict) {
+    // Date pattern: DD.MM.YY or DD.MM.YYYY
     const datePattern = /\b(\d{2})[.\-/](\d{2})[.\-/](\d{2}|\d{4})\b/;
+
     for (let key in receiptDict) {
-        // Loop through every word of the row
+        // Loop through every word in the row
         for (let i = 0; i < receiptDict[key].length; i++) {
             // Check if datePattern appears somewhere in the string
             const date_text = receiptDict[key][i].match(datePattern);
@@ -112,7 +294,7 @@ function extractDate(receiptDict){
                 const month = date_text[2];
                 let year = date_text[3];
 
-                // If year is in YY format, convert it to YYYY
+                // If the year is in YY format, convert it to YYYY
                 if (year.length === 2) {
                     const currentYear = new Date().getFullYear().toString();
                     const century = currentYear.substring(0, 2); // Get the current century (first two digits of the year)
@@ -125,171 +307,288 @@ function extractDate(receiptDict){
         }
     }
 
-    //If no date is found on the receipt return the current date
+    // If no date is found, return the current date in YYYY-MM-DD format
     const current_date = new Date();
-    const formatted_date = current_date.toISOString().split('T')[0]; // Extracts YYYY-MM-DD format
-    console.log(formatted_date);
+    const formatted_date = current_date.toISOString().split('T')[0];
 
     return formatted_date;
-};
+}
 
-function cutReceipt(receiptDict){
-    const possible_starts = getPossibleStarts();
-    const possible_ends = getPossibleEnds();
+/**
+ * Removes irrelevant rows from the receipt (e.g., headers, footers).
+ * Focuses on keeping the relevant part of the receipt (items and prices).
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - The cut receipt dictionary with only relevant content.
+ */
+function cutReceipt(receiptDict) {
+    const possible_starts = getPossibleStarts(); // Start points for relevant data
+    const possible_ends = getPossibleEnds(); // End points for relevant data
 
-    function getEditIndex(dictToSearch){
-        for(let key in receiptDict){
-            for(let i = 0; i < receiptDict[key].length; i++){
+    // Helper function to find the start or end index
+    function getEditIndex(dictToSearch) {
+        for (let key in receiptDict) {
+            for (let i = 0; i < receiptDict[key].length; i++) {
                 if (!/^[a-zA-Z]+$/.test(receiptDict[key][i])) {
                     continue; // Skip if the element is not only letters
                 }
-                for(let j = 0; j < dictToSearch.length; j++){
-                    if(receiptDict[key][i].includes(dictToSearch[j])){
-                        //Only the first occurence
-                        return key;
+                for (let j = 0; j < dictToSearch.length; j++) {
+                    if (receiptDict[key][i].includes(dictToSearch[j])) {
+                        return key; // Return the first occurrence
                     }
                 }
             }
         }
-        //Default
+        // Default to -1 if no match is found
         return -1;
-    };
+    }
 
-    const start_index = getEditIndex(possible_starts);
-    let end_index = getEditIndex(possible_ends);
+    const start_index = getEditIndex(possible_starts); // Get starting index
+    let end_index = getEditIndex(possible_ends); // Get ending index
     let tempDict = receiptDict;
 
-    // if end_index was found
+    // If an end index is found, remove rows after the relevant content
     if (end_index !== -1) {
-        // Don't remove the Summe row
-        end_index++;
-
-        // Remove every row after the relevant content
+        end_index++; // Include the "Summe" row
         const iter_length = getDictLength(tempDict) - 1;
         for (let j = end_index; j <= iter_length; j++) {
             delete tempDict[j];
         }
     }
 
-    // if start_index was found
+    // If a start index is found, remove rows before the relevant content
     if (start_index !== -1) {
-        // Remove every row before the relevant content
         for (let i = 0; i <= start_index; i++) {
             delete tempDict[i];
         }
     }
 
     return tempDict;
-};
+}
 
-function extractSum(receiptDict){
-    const index = getMaxDictKey(receiptDict);
-    if(index === 0){
-        return null;
+/**
+ * Extracts the sum (total amount) from the receipt.
+ * Typically found at the bottom of the receipt.
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {number|null} - The extracted sum, or null if no sum is found.
+ */
+function extractSum(receiptDict) {
+    const index = getMaxDictKey(receiptDict); // Get the index of the last row
+
+    if (index === 0) {
+        return null; // Return null if no valid row is found
     }
+
     const last_row_arr = receiptDict[index];
 
-
-    function doesRowContainEnd(row){
-        const possible_ends = getPossibleEnds();
-        for(let end of possible_ends){
-            for(let str of row){
-                if(str.includes(end)){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    //Does the last row start contain a possible end?
-    if(doesRowContainEnd(last_row_arr)){
+    // Check if the last row contains a possible end (e.g., "Summe")
+    if (doesRowContainEnd(last_row_arr)) {
         const last_row_elem = last_row_arr[last_row_arr.length - 1];
-        //Is the last element a number?
-        const last_row_num = convertToNumber(last_row_elem);
+        const last_row_num = convertToNumber(last_row_elem); // Convert last element to a number
 
-        if(!isNaN(last_row_num)){
-            return last_row_num;
+        if (!isNaN(last_row_num)) {
+            return last_row_num; // Return the sum if valid
         }
     }
 
-    // Default if no sum can be determined
-    return null;
-};
+    return null; // Default to null if no sum can be determined
+}
 
-function removeKgPriceRows(receiptDict){
+/**
+ * Removes rows containing price per kilogram (e.g., "/kg").
+ * These rows typically represent unit prices and not total prices.
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - The cleaned receipt dictionary with /kg rows removed.
+ */
+function removeKgPriceRows(receiptDict) {
     const remove_keys = [];
-    //Find key index where a "/kg" is in the row
-    for(let key in receiptDict){
-        for(let i = 0; i < receiptDict[key].length; i++){
-            if ((receiptDict[key][i].includes("/kg"))) {
+
+    // Find rows that contain "/kg"
+    for (let key in receiptDict) {
+        for (let i = 0; i < receiptDict[key].length; i++) {
+            if (receiptDict[key][i].includes("/kg")) {
                 remove_keys.push(key);
             }
         }
     }
-    
-    //Delete the rows at the found key
-    for(let i = 0; i < remove_keys.length;i++){
+
+    // Remove rows that were marked for deletion
+    for (let i = 0; i < remove_keys.length; i++) {
         delete receiptDict[remove_keys[i]];
     }
 
     return receiptDict;
+}
 
-};
+/**
+ * Removes discount-related rows from the receipt (e.g., "Rabatt", "Extrapunkte").
+ * Also removes the last row if it is an end row (e.g., "Summe").
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - The receipt dictionary with discount rows removed.
+ */
+function removeDiscountRows(receiptDict) {
+    const possible_discounts = getPossibleDiscounts();
 
-function getPossibleStores(){
+    // Loop through the receipt to find and remove discount rows
+    for (let key in receiptDict) {
+        for (let i = 0; i < receiptDict[key].length; i++) {
+            for (let j = 0; j < possible_discounts.length; j++) {
+                if (receiptDict[key][i].includes(possible_discounts[j])) {
+                    delete receiptDict[key]; // Remove the entire key (row)
+                    break;
+                }
+            }
+            if (!receiptDict.hasOwnProperty(key)) break; // Exit loop if row was deleted
+        }
+    }
+
+    // Also remove the last row if it contains an end word (e.g., "Summe")
+    const index = getMaxDictKey(receiptDict);
+    if (index === 0) {
+        return null;
+    }
+
+    const last_row_arr = receiptDict[index];
+    if (doesRowContainEnd(last_row_arr)) {
+        delete receiptDict[index];
+    }
+
+    return receiptDict;
+}
+
+/**
+ * Returns a dictionary of possible store names and their corresponding identifiers.
+ * @returns {Object} - Dictionary of store names and their associated keywords.
+ */
+function getPossibleStores() {
     return {
-        "Kaufland":["Kaufland","KAUFLAND","KLC","Bergsteig","09621/78260"],
-        "Lidl":["Lidl","LIDL","Barbarastr", "Hirschauer","L4DL","L$DE"],
-        "Netto":["Netto","NETTO","Mosacher","Deutschlandcard","Marken-Discount"],
-        "Edeka":["Edeka","EDEKA","Wiesmeth","Pfistermeisterstr","G&G","Kuhnert"], 
-        //potential Stores
-        "Aldi":["Aldi","ALDI"],
-        "Norma":["Norma","NORMA"]
+        "Kaufland": ["Kaufland", "KAUFLAND", "KLC", "Bergsteig", "09621/78260"],
+        "Lidl": ["Lidl", "LIDL", "Barbarastr", "Hirschauer", "L4DL", "L$DE"],
+        "Netto": ["Netto", "NETTO", "Mosacher", "Deutschlandcard", "Marken-Discount"],
+        "Edeka": ["Edeka", "EDEKA", "Wiesmeth", "Pfistermeisterstr", "G&G", "Kuhnert"],
+        "Aldi": ["Aldi", "ALDI"],
+        "Norma": ["Norma", "NORMA"]
     };
 }
 
-export function getPossibleStoreKeys(){
-    const possible_stores = getPossibleStores();
+/**
+ * Returns an array of all the store names (keys) available in the possible stores dictionary.
+ * These store names are used to match against the receipt data to identify which store the receipt belongs to.
+ * @returns {Array} - An array of store names (e.g., "Kaufland", "Lidl", etc.).
+ */
+export function getPossibleStoreKeys() {
+    const possible_stores = getPossibleStores(); // Retrieve the dictionary of possible stores
     const possible_store_keys = [];
 
-    for(let key in possible_stores){
-        possible_store_keys.push(key);
+    // Loop through the possible stores object and extract each store key
+    for (let key in possible_stores) {
+        possible_store_keys.push(key); // Add each store key (name) to the array
     }
 
-    return possible_store_keys;
+    return possible_store_keys; // Return the array of store keys
 }
 
-function getPossibleStarts(){
+/**
+ * Returns a list of possible receipt start indicators (e.g., "EUR", "Preis EUR").
+ * These help identify where the relevant receipt content begins.
+ * @returns {Array} - Array of possible receipt start strings.
+ */
+function getPossibleStarts() {
     return ["EUR", "Preis EUR", "PREIS", "Preis"];
 }
 
-function getPossibleEnds(){
+/**
+ * Returns a list of possible receipt end indicators (e.g., "SUMME", "zu zahlen").
+ * These help identify where the relevant receipt content ends.
+ * @returns {Array} - Array of possible receipt end strings.
+ */
+function getPossibleEnds() {
     return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen"];
-};
+}
 
-function getDictLength(dict){ 
-    return (Object.keys(dict)).length;
-};
+/**
+ * Returns a list of possible discount-related keywords (e.g., "Rabatt", "Extrapunkte").
+ * These help identify rows in the receipt that indicate discounts or loyalty points.
+ * @returns {Array} - Array of possible discount keywords.
+ */
+function getPossibleDiscounts() {
+    return ["Rabatt", "RABATT", "Zusatzpunkte"];
+}
 
+/**
+ * Gets the number of keys in the dictionary (i.e., the number of rows in the receipt).
+ * @param {Object} dict - The dictionary to count keys from.
+ * @returns {number} - The number of keys in the dictionary.
+ */
+function getDictLength(dict) {
+    return Object.keys(dict).length;
+}
+
+/**
+ * Converts a value to a number, handling special cases like comma instead of a decimal point.
+ * Rounds the result to two decimal places.
+ * @param {string} value - The value to convert to a number.
+ * @returns {number|null} - The converted number, or null if conversion fails.
+ */
 function convertToNumber(value) {
-    // Replace ',' with '.'
-    let normalizedValue = value.replace(',', '.');
+    let normalizedValue = value.replace(',', '.'); // Replace commas with decimal points
     let num = Number(normalizedValue);
 
-    // Did the conversion result in a number?
-    return !isNaN(num) ? num : null;
-};
+    return !isNaN(num) ? parseFloat(num.toFixed(2)) : null; // Round to 2 decimal places if valid number
+}
 
+/**
+ * Checks if a row contains any possible end indicators (e.g., "SUMME", "zu zahlen").
+ * This helps identify the total sum row in the receipt.
+ * @param {Array} row - The row to check for end indicators.
+ * @returns {boolean} - True if the row contains an end indicator, false otherwise.
+ */
+function doesRowContainEnd(row) {
+    const possible_ends = getPossibleEnds();
+    for (let end of possible_ends) {
+        for (let str of row) {
+            if (str.includes(end)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Gets the highest numeric key in the dictionary, assuming the keys are numbers.
+ * @param {Object} dict - The dictionary from which to find the highest key.
+ * @returns {number} - The highest numeric key, or 0 if no keys are found.
+ */
 function getMaxDictKey(dict) {
     if (!dict || Object.keys(dict).length === 0) {
         return 0;
     }
 
-    // Zuerst alle Schlüssel extrahieren und in Zahlen umwandeln
     let maxKey = Object.keys(dict)
-        .map(key => Number(key)) // Schlüssel in Zahlen umwandeln
-        .reduce((a, b) => a > b ? a : b); // Größten numerischen Schlüssel finden
+        .map(key => Number(key)) // Convert keys to numbers
+        .reduce((a, b) => a > b ? a : b); // Find the largest key
 
-    return maxKey; // Den größten numerischen Schlüssel zurückgeben
-};
+    return maxKey;
+}
+
+/**
+ * Concatenates item name from the row by excluding empty spaces.
+ * @param {Array} row - Array of strings representing a row of the receipt.
+ * @param {number} last_index - Index of the last element in the row.
+ * @returns {string} - The concatenated item name.
+ */
+function concatenatItemNameString(row, last_index) {
+    if (row.length === 0) return '';
+    if (row.length === 1) return row[0];
+
+    // If item names and price are seperated by a ' ', stop the loop before that
+    let iter_index = last_index;
+    if (row[last_index - 1] === ' ') iter_index--;
+
+    let name_str = '';
+    for (let i = 0; i < iter_index; i++) {
+        name_str = name_str + row[i];
+    }
+
+    return name_str;
+}

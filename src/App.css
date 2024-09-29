@@ -13,14 +13,14 @@
   color: white;
 }
 
-.camera-icon, .trash-icon, .file-icon, .check-icon {
+.camera-icon, .trash-icon, .file-icon, .check-file-icon {
   width: 75px;
   height: auto;
   cursor: pointer;
   transition: transform 0.2s ease-in-out; 
 }
 
-.camera-icon:hover, .file-icon:hover, .check-icon:hover  {
+.camera-icon:hover, .file-icon:hover, .check-file-icon:hover  {
   transform: scale(1.1);  /* Slightly enlarge the icon on hover */
   color: #2e7d32;
 }
