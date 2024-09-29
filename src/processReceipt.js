@@ -54,9 +54,22 @@ export function processReceiptItems(receipt) {
             createReceiptItemsKaufland(receiptOnlyItemsDict);
             break;
         case "Lidl":
+            createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
             break;
+        case "Edeka":
+            // TODO Pfand ends with *A/*B in price -> replace with ""
+            createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
+            break;
+        case "Netto":
+            // TODO Pfand ends with *A in price -> replace with ""
+            break
+
         default:
     }
+    // TODO
+    // Discounts
+    // Categories (fuzzy matching)
+    // Errors/Edge Cases
 }
 
 /**
@@ -110,6 +123,9 @@ class ReceiptItem {
 
     // Apply a discount to the price
     applyDiscount(discount) {
+        if (discount < 0 || discount > this.price) {
+            throw new Error("Invalid discount amount");
+        }
         this.price = this.price - discount;
     }
 
@@ -119,8 +135,62 @@ class ReceiptItem {
 
     // Get the total price for this item (price * amount)
     getTotal() {
+        if (this.amount === 0){
+            return this.price;
+        }
         return this.price * this.amount;
     }
+}
+
+/**
+ * Creates receipt items from the processed Lidl/Edeka receipt dictionary.
+ * @param {Object} receiptOnlyItemsDict - Dictionary of receipt items after filtering.
+ */
+function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
+    const items = [];
+
+    for (let key in receiptOnlyItemsDict) {
+        if(receiptOnlyItemsDict[key].length < 2){
+            //Can't extract an item here
+            continue;
+        }
+        const last_index = receiptOnlyItemsDict[key].length - 1;
+        const last_elem = receiptOnlyItemsDict[key][last_index];
+        const second_last_elem = receiptOnlyItemsDict[key][last_index-1];
+        const third_last_elem = receiptOnlyItemsDict[key][last_index-2];
+
+
+        // Regular row
+        if(convertToNumber(last_elem)){
+            // Multiple Items
+            const total_price = convertToNumber(last_elem);
+            if(convertToNumber(second_last_elem)){
+                const amount = convertToNumber(second_last_elem);
+                const single_price = Number((total_price/amount).toFixed(2));
+                // Determine the amount of elements to leave out for the name
+                let elems_to_leave_out = 0;
+                if(third_last_elem === "x" || third_last_elem === "X"){
+                    elems_to_leave_out = 4;
+                }
+                else{
+                    elems_to_leave_out = 3;
+                }
+                const name = concatenatItemNameString(receiptOnlyItemsDict[key], elems_to_leave_out);
+
+                const item = new ReceiptItem(key,name,single_price,amount);
+                items.push(item);
+            }
+            // Single items
+            else{
+                const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);
+                const item = new ReceiptItem(key,name,total_price,1);
+                items.push(item);
+            }
+            
+        }
+    }
+
+    console.log(items);
 }
 
 /**
@@ -139,7 +209,7 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
 
         // Check if the last element is a number and if there is no pending name-only item
         if (convertToNumber(last_elem) && !only_name) {
-            const name = concatenatItemNameString(receiptOnlyItemsDict[key], last_index);
+            const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);
             const price = convertToNumber(last_elem);
             const amount = 1;
 
@@ -151,7 +221,7 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
         // Handle name-only rows (no price in the row)
         if (!convertToNumber(last_elem) && !only_name) {
             only_name = true;
-            last_name = concatenatItemNameString(receiptOnlyItemsDict[key], last_index);
+            last_name = concatenatItemNameString(receiptOnlyItemsDict[key], 0);
             last_key = key;
             continue;
         }
@@ -502,7 +572,7 @@ function getPossibleStarts() {
  * @returns {Array} - Array of possible receipt end strings.
  */
 function getPossibleEnds() {
-    return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen"];
+    return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen", "SUNNE"];
 }
 
 /**
@@ -577,18 +647,21 @@ function getMaxDictKey(dict) {
  * @param {number} last_index - Index of the last element in the row.
  * @returns {string} - The concatenated item name.
  */
-function concatenatItemNameString(row, last_index) {
+function concatenatItemNameString(row, elems_to_leave_out) {
     if (row.length === 0) return '';
     if (row.length === 1) return row[0];
 
-    // If item names and price are seperated by a ' ', stop the loop before that
-    let iter_index = last_index;
-    if (row[last_index - 1] === ' ') iter_index--;
-
     let name_str = '';
-    for (let i = 0; i < iter_index; i++) {
-        name_str = name_str + row[i];
+    // Delete all whitespaces from name so that both pdf and img is equal
+    const cleanRow = row.filter(item => item !== ' ');
+
+    // Declare loop stop as length - elements set to leave at the row end
+    let last_index = cleanRow.length;
+    last_index = last_index - elems_to_leave_out;
+
+    for (let i = 0; i < last_index; i++) {
+        name_str = name_str + cleanRow[i] + ' ';
     }
 
-    return name_str;
+    return name_str.trim();
 }
