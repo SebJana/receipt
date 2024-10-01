@@ -22,6 +22,7 @@ export function processReceiptDict(receiptDict) {
 
     // Step 3: Extract the relevant part of the receipt (items, prices, etc.)
     let relevantReceiptDict = cutReceipt(cleanReceiptDict);
+    console.log(relevantReceiptDict);
     relevantReceiptDict = removeKgPriceRows(relevantReceiptDict);
 
     // Step 4: Extract the total sum from the receipt
@@ -46,9 +47,10 @@ export function processReceiptDict(receiptDict) {
 export function processReceiptItems(receipt) {
     const receiptDict = receipt.receiptItemsDict;
 
+    // Copy original receipt dict
+    let receiptOnlyItemsDict = {...receiptDict};
     // Remove discount-related rows from the receipt
-    const receiptOnlyItemsDict = removeDiscountRows(receiptDict);
-    console.log(receiptOnlyItemsDict);
+    receiptOnlyItemsDict = removeDiscountRows(receiptOnlyItemsDict);
 
     let receiptItems = [];
 
@@ -67,11 +69,16 @@ export function processReceiptItems(receipt) {
             receiptItems = createReceiptItemsNetto(receiptOnlyItemsDict);
             break
         default:
-            alert("Dieser Laden kann momentan nicht verarbeitet werden");
+            receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
+            console.log("Store yet to be processed");
     }
 
+    // Apply the discounts
+    const receiptDiscount = extractDiscountRows(receiptDict);
+    receiptItems = applyDiscounts(receiptItems, receiptDiscount);
+    console.log(receiptItems);
+
     // TODO
-    // Discounts
     // Categories (fuzzy matching)
     // Errors/Edge Cases
 
@@ -127,12 +134,13 @@ class ReceiptItem {
         this.category = '';
     }
 
-    // Apply a discount to the price
+    // Apply a discount to the price (-0,60)
     applyDiscount(discount) {
-        if (discount < 0 || discount > this.price) {
+        discount = discount/this.amount;
+        if (discount > 0) {
             throw new Error("Invalid discount amount");
         }
-        this.price = this.price - discount;
+        this.price = Number((this.price + discount).toFixed(2));
     }
 
     setCategory(category) {
@@ -182,20 +190,19 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
                 }
                 const name = concatenatItemNameString(receiptOnlyItemsDict[key], elems_to_leave_out);
 
-                const item = new ReceiptItem(key,name,single_price,amount);
+                const item = new ReceiptItem(convertToNumber(key),name,single_price,amount);
                 items.push(item);
             }
             // Single items
             else{
                 const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);
-                const item = new ReceiptItem(key,name,total_price,1);
+                const item = new ReceiptItem(convertToNumber(key),name,total_price,1);
                 items.push(item);
             }
             
         }
     }
 
-    console.log(items);
     return(items);
 }
 
@@ -225,7 +232,7 @@ function createReceiptItemsNetto(receiptOnlyItemsDict) {
             const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);
 
             // Create a new receipt item for single items
-            const item = new ReceiptItem(key, name, single_price, 1);
+            const item = new ReceiptItem(convertToNumber(key), name, single_price, 1);
             items.push(item);
         }
 
@@ -236,7 +243,7 @@ function createReceiptItemsNetto(receiptOnlyItemsDict) {
             const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);  // Concatenate the item name
 
             // Create a new receipt item
-            const item = new ReceiptItem(key, name, last_single_price, amount);
+            const item = new ReceiptItem(convertToNumber(key), name, last_single_price, amount);
             items.push(item);
 
             // Reset the state after processing
@@ -251,7 +258,6 @@ function createReceiptItemsNetto(receiptOnlyItemsDict) {
         }
     }
 
-    console.log(items);
     return items;
 }
 
@@ -276,7 +282,7 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
             const price = convertToNumber(last_elem);
             const amount = 1;
 
-            const item = new ReceiptItem(key, name, price, amount);
+            const item = new ReceiptItem(convertToNumber(key), name, price, amount);
             items.push(item);
             continue; // Move to the next key
         }
@@ -299,7 +305,6 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
         }
     }
 
-    console.log(items);
     return(items);
 }
 
@@ -321,16 +326,77 @@ function createItemMultipleKaufland(last_key, last_name, row) {
 
         // Check if the amount is an integer and if it's contained in the first element of the row
         if (Number.isInteger(amount) && cleanRow[0].includes(amount.toString())) {
-            return new ReceiptItem(last_key, last_name, single_price, amount);
+            return new ReceiptItem(convertToNumber(last_key), last_name, single_price, amount);
         }
 
         // If amount is not an integer or not contained in the first element, return item with amount 0
-        return new ReceiptItem(last_key, last_name, single_price, 0);
+        return new ReceiptItem(convertToNumber(last_key), last_name, single_price, 0);
     }
 
     // Default item if no valid numbers are found
-    return new ReceiptItem(last_key, last_name, 0, 0);
+    return new ReceiptItem(convertToNumber(last_key), last_name, 0, 0);
 }
+
+
+/**
+ * Extracts the discount containing rows and saves the amount corresponding to the row key
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - Discount Rows.
+ */
+function extractDiscountRows(receiptDict) {
+    const possible_discounts = getPossibleDiscounts();
+    const discount_rows = {};
+
+    // Loop through the receipt to find and remove discount rows
+    for (let key in receiptDict) {
+        const last_index = receiptDict[key].length -1;
+        for (let i = 0; i < receiptDict[key].length; i++) {
+            for (let j = 0; j < possible_discounts.length; j++) {
+                if (receiptDict[key][i].includes(possible_discounts[j])) {
+                    discount_rows[key] = receiptDict[key][last_index]; // Add the correct amount of the discount row
+                    break; // Break out of the `j` loop
+                }
+            }
+            if (discount_rows[key]) {
+                break; // Break out of the `i` loop if discount was found
+            }
+        }
+    }
+
+    return discount_rows;
+}
+
+
+/**
+ * Search the previous row to the discount key, and apply the discount amount to that receiptItem
+ * @param {Array} receiptDict - ReceiptItems.
+ * @param {Object} receiptDict - Dictionary of discount rows.
+ * @returns {Array} - ReceiptItems with discounts applied.
+ */
+function applyDiscounts(receiptItems, receiptDiscount) {
+    for (let key in receiptDiscount) {
+        const discountValue = convertToNumber(receiptDiscount[key]); // Get the discount amount
+        const discountIndex = parseInt(key, 10); // Parse the key as an index
+
+        let possible_item = null;
+
+        // Loop through the receipt items to find the item with the highest index less than the discount index
+        for (let i = 0; i < receiptItems.length; i++) {
+            if (receiptItems[i].index < discountIndex) {
+                if (!possible_item || receiptItems[i].index > possible_item.index) {
+                    possible_item = receiptItems[i];
+                }
+            }
+        }
+
+        // Apply the discount to the found item
+        if (possible_item) {
+            possible_item.applyDiscount(discountValue);
+        }
+    }
+    return receiptItems;
+}
+
 
 /**
  * Cleans the receipt dictionary by removing unnecessary elements such as ' ' or ''.
@@ -371,12 +437,21 @@ function cleanRows(receiptDict) {
     }
 
     for (let key in receiptDict) {
-        // Replace *A, *B, +*A, and +*B in the last element of each array
-        receiptDict[key][receiptDict[key].length - 1] = receiptDict[key][receiptDict[key].length - 1]
+        // Get the last element
+        let lastElement = String(receiptDict[key][receiptDict[key].length - 1]);
+    
+        // Replace patterns like *A, *B, +*A, +*B
+        lastElement = lastElement
             .replace("+*A", "")
             .replace("+*B", "")
             .replace("*A", "")
             .replace("*B", "");
+    
+        // Replace numbers followed by A or B (like "5A" or "10B")
+        lastElement = lastElement.replace(/\d+[AB]/g, (match) => match.slice(0, -1));
+    
+        // Assign the modified string back to the array
+        receiptDict[key][receiptDict[key].length - 1] = lastElement;
     }
 
     return receiptDict;
