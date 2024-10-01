@@ -7,6 +7,8 @@
  * @throws Will throw an error if the receipt text couldn't be extracted or processed.
  */
 export function processReceiptDict(receiptDict) {
+    //TODO Error Handling, Edge Cases
+
     if (!receiptDict) {
         throw new Error('Receipt text couldn’t be extracted');
     }
@@ -48,28 +50,32 @@ export function processReceiptItems(receipt) {
     const receiptOnlyItemsDict = removeDiscountRows(receiptDict);
     console.log(receiptOnlyItemsDict);
 
+    let receiptItems = [];
+
     // Process items differently based on the store
     switch (receipt.store) {
         case "Kaufland":
-            createReceiptItemsKaufland(receiptOnlyItemsDict);
+            receiptItems = createReceiptItemsKaufland(receiptOnlyItemsDict);
             break;
         case "Lidl":
-            createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
+            receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
             break;
         case "Edeka":
-            // TODO Pfand ends with *A/*B in price -> replace with ""
-            createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
+            receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
             break;
         case "Netto":
-            // TODO Pfand ends with *A in price -> replace with ""
+            receiptItems = createReceiptItemsNetto(receiptOnlyItemsDict);
             break
-
         default:
+            alert("Dieser Laden kann momentan nicht verarbeitet werden");
     }
+
     // TODO
     // Discounts
     // Categories (fuzzy matching)
     // Errors/Edge Cases
+
+    return receiptItems;
 }
 
 /**
@@ -159,7 +165,6 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
         const second_last_elem = receiptOnlyItemsDict[key][last_index-1];
         const third_last_elem = receiptOnlyItemsDict[key][last_index-2];
 
-
         // Regular row
         if(convertToNumber(last_elem)){
             // Multiple Items
@@ -191,7 +196,65 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
     }
 
     console.log(items);
+    return(items);
 }
+
+/**
+ * Creates receipt items from the processed Netto receipt dictionary.
+ * @param {Object} receiptOnlyItemsDict - Dictionary of receipt items after filtering.
+ */
+function createReceiptItemsNetto(receiptOnlyItemsDict) {
+    const items = [];
+    let only_amount_row = false; // Flag for name-only rows
+    let last_single_price = 0;
+
+    for (let key in receiptOnlyItemsDict) {
+        if (receiptOnlyItemsDict[key].length < 2) {
+            // Can't extract an item here
+            continue;
+        }
+
+        const last_index = receiptOnlyItemsDict[key].length - 1;
+        const last_elem = receiptOnlyItemsDict[key][last_index];
+        const second_last_elem = receiptOnlyItemsDict[key][last_index - 1];
+        const lastElemNumber = convertToNumber(last_elem);
+
+        // Regular row: Handle single quantity items, can't have ONLY an amount identifier
+        if (!only_amount_row && lastElemNumber && !(/^[0-9]*[xX]$/.test(second_last_elem))) {
+            const single_price = lastElemNumber;
+            const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);
+
+            // Create a new receipt item for single items
+            const item = new ReceiptItem(key, name, single_price, 1);
+            items.push(item);
+        }
+
+        // Row after multiple items: Handle the row with the total price
+        if (only_amount_row && lastElemNumber) {
+            const total_price = lastElemNumber;  // This is the total price
+            const amount = Number((total_price / last_single_price).toFixed(2));  // Calculate the quantity
+            const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);  // Concatenate the item name
+
+            // Create a new receipt item
+            const item = new ReceiptItem(key, name, last_single_price, amount);
+            items.push(item);
+
+            // Reset the state after processing
+            last_single_price = 0;
+            only_amount_row = false;
+        }
+
+        // Multiple Items: Handle items with multiple quantities (e.g., 3x, X, 3X)
+        if (lastElemNumber && (/^[0-9]*[xX]$/.test(second_last_elem)) && second_last_elem.length <=3) {
+            last_single_price = lastElemNumber;  // Set the price for one unit
+            only_amount_row = true;
+        }
+    }
+
+    console.log(items);
+    return items;
+}
+
 
 /**
  * Creates receipt items from the processed Kaufland receipt dictionary.
@@ -199,7 +262,7 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
  */
 function createReceiptItemsKaufland(receiptOnlyItemsDict) {
     const items = [];
-    let only_name = false; // Flag for name-only rows
+    let only_name_row = false; // Flag for name-only rows
     let last_name = '';
     let last_key = '';
 
@@ -208,7 +271,7 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
         const last_elem = receiptOnlyItemsDict[key][last_index];
 
         // Check if the last element is a number and if there is no pending name-only item
-        if (convertToNumber(last_elem) && !only_name) {
+        if (convertToNumber(last_elem) && !only_name_row) {
             const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);
             const price = convertToNumber(last_elem);
             const amount = 1;
@@ -219,24 +282,25 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
         }
 
         // Handle name-only rows (no price in the row)
-        if (!convertToNumber(last_elem) && !only_name) {
-            only_name = true;
+        if (!convertToNumber(last_elem) && !only_name_row) {
+            only_name_row = true;
             last_name = concatenatItemNameString(receiptOnlyItemsDict[key], 0);
             last_key = key;
             continue;
         }
 
-        // Handle rows after encountering a name-only row
-        if (only_name) {
+        // Handle rows after encountering a name-only row, must include '*'
+        if (only_name_row) {
             if (receiptOnlyItemsDict[key].some(item => /\*/.test(item))) {
                 const item = createItemMultipleKaufland(last_key, last_name, receiptOnlyItemsDict[key]);
                 items.push(item);
             }
-            only_name = false; // Reset the flag after processing
+            only_name_row = false; // Reset the flag after processing
         }
     }
 
     console.log(items);
+    return(items);
 }
 
 /**
@@ -248,11 +312,6 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
  */
 function createItemMultipleKaufland(last_key, last_name, row) {
     const cleanRow = row.filter(item => item !== ' '); // Remove empty spaces
-
-    if (cleanRow.length < 3) {
-        return new ReceiptItem(last_key, last_name, 0, 0); // Default item if row has less than 3 elements
-    }
-
     const last_index = cleanRow.length - 1;
 
     if (convertToNumber(cleanRow[last_index]) && convertToNumber(cleanRow[last_index - 1])) {
@@ -309,6 +368,15 @@ function cleanRows(receiptDict) {
             receiptDict[key].splice(i, 1);
             i++; // Adjust index after removal
         }
+    }
+
+    for (let key in receiptDict) {
+        // Replace *A, *B, +*A, and +*B in the last element of each array
+        receiptDict[key][receiptDict[key].length - 1] = receiptDict[key][receiptDict[key].length - 1]
+            .replace("+*A", "")
+            .replace("+*B", "")
+            .replace("*A", "")
+            .replace("*B", "");
     }
 
     return receiptDict;

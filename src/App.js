@@ -20,6 +20,7 @@ function App() {
   const [store, setStore] = useState(null); // Store the user-selected or extracted store name
   const [date, setDate] = useState(null); // Store the user-selected or extracted date
   const [receipt, setReceipt] = useState(null); // Store the processed receipt object
+  const [receiptItems, setReceiptItems] = useState(null); // Store the extracted ReceiptItems
 
   const [isPicExtractionConfirmed, setIsPicExtractionConfirmed] = useState(false); // Track whether the file extraction has been confirmed
   const [isUserConfirmedStoreDate, setIsUserConfirmedStoreDate] = useState(false); // Track whether the user has confirmed the store and date
@@ -126,11 +127,11 @@ function App() {
         const receipt = processReceiptDict(text_dict); // Process the extracted text into a receipt object
         startUserConfirmationStoreAndDate(receipt); // Begin user confirmation of store and date
       } catch (err) {
-        console.error(err);
+        console.error(err, "TEST");
       }
     }
     // Handle extraction for PDF files using PDF.js
-    else if (selectedFile.type === 'application/pdf') {
+    else if (selectedFile.type   === 'application/pdf') {
       try {
         const text_dict = await extractFromPDF(selectedFile); // Extract text from the PDF
         const receipt = processReceiptDict(text_dict); // Process the extracted text into a receipt object
@@ -148,7 +149,7 @@ function App() {
    * @param {Object} receipt - The receipt object that has been processed and confirmed by the user.
    */
   const runReceiptItems = (receipt) => {
-    processReceiptItems(receipt); // Process the receipt items (store-specific logic)
+    setReceiptItems(processReceiptItems(receipt)); // Process the receipt items (store-specific logic)
   };
 
   /**
@@ -182,6 +183,8 @@ function App() {
     setImgElement(null); // Clear the image element
     setIsLoading(false); // Reset loading state
     setIsUserConfirmedStoreDate(false); // Reset user confirmation state
+    setReceipt(null); // Clear the Receipt dict
+    setReceiptItems(null) // Clear the ReceiptItem array
   };
 
   /**
@@ -275,6 +278,17 @@ function App() {
           <Check onClick={handleUserConfirmationStoreAndDate} className="check-data-icon" />
         </div>
       )}
+      <div>
+        {receiptItems && receiptItems.length > 0 ? (
+          receiptItems.map((item, index) => (
+            <div key={index}>
+              <p>{item.name}, {item.price}, {item.amount}</p>
+            </div>
+          ))
+        ) : (
+          <p>No items found</p>
+        )}
+      </div>
     </div>
   );
 }
