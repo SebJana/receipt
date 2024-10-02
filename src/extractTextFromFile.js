@@ -106,18 +106,39 @@ function preprocessImage(img) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
 
-  // Convert the image to grayscale by averaging the RGB values
+  let totalBrightness = 0;
+  let pixelCount = 0;
+
+  // Calculate the brightness by averaging the grayscale values
   for (let i = 0; i < data.length; i += 4) {
     const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    data[i] = avg;        // Red
-    data[i + 1] = avg;    // Green
-    data[i + 2] = avg;    // Blue
+    totalBrightness += avg;
+    pixelCount++;
   }
 
-  // Update the canvas with the grayscale data
+  const averageBrightness = totalBrightness / pixelCount;
+  // Set a dynamic threshold slightly below the average brightness
+  const dynamicThreshold = averageBrightness * 0.87;
+  // Apply the dynamic threshold to convert the image to high contrast
+  for (let i = 0; i < data.length; i += 4) {
+    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    const newValue = avg > dynamicThreshold ? 255 : 0;
+
+    data[i] = newValue;        // Red
+    data[i + 1] = newValue;    // Green
+    data[i + 2] = newValue;    // Blue
+  }
+
+  // Update the canvas with the new high-contrast data
   ctx.putImageData(imageData, 0, 0);
 
-  return canvas; // Return the canvas element with the grayscale image
+  // Create a download link (optional)
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL(); // Get the image data URL
+  link.download = 'ocr-optimized-image.png'; // Set the filename for download
+  link.click(); // Simulate a click to download the image
+
+  return canvas; // Return the canvas element with the high-contrast image
 }
 
 /**
