@@ -70,7 +70,7 @@ export function processReceiptItems(receipt) {
             break
         default:
             receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
-            console.log("Store yet to be processed");
+            console.log("Store yet to be processed, using default method");
     }
 
     // Apply the discounts
@@ -80,7 +80,9 @@ export function processReceiptItems(receipt) {
 
     // TODO
     // Categories (fuzzy matching)
+    // KG row handndling (kg row contains price at Kaufland)
     // Errors/Edge Cases
+    // Testing
 
     return receiptItems;
 }
@@ -138,7 +140,7 @@ class ReceiptItem {
     applyDiscount(discount) {
         discount = discount/this.amount;
         if (discount > 0) {
-            throw new Error("Invalid discount amount");
+            console.log("Invalid Discount amount!");
         }
         this.price = Number((this.price + discount).toFixed(2));
     }
@@ -445,7 +447,9 @@ function cleanRows(receiptDict) {
             .replace("+*A", "")
             .replace("+*B", "")
             .replace("*A", "")
-            .replace("*B", "");
+            .replace("*B", "")
+            .replace("+A", "")
+            .replace("+B", "");
     
         // Replace numbers followed by A or B (like "5A" or "10B")
         lastElement = lastElement.replace(/\d+[AB]/g, (match) => match.slice(0, -1));
@@ -724,7 +728,7 @@ function getPossibleEnds() {
  * @returns {Array} - Array of possible discount keywords.
  */
 function getPossibleDiscounts() {
-    return ["Rabatt", "RABATT", "Zusatzpunkte"];
+    return ["Rabatt", "RABATT", "Zusatzpunkte", "Rebatt"];
 }
 
 /**

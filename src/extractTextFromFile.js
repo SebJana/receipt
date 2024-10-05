@@ -94,52 +94,208 @@ export function extractFromImage(img, language = 'deu') {
  * @returns {HTMLCanvasElement} - The canvas element containing the grayscale image.
  */
 function preprocessImage(img) {
+  // Create a canvas and draw the original image on it
   const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
   canvas.width = img.width;
   canvas.height = img.height;
-
-  // Draw the image onto the canvas
   ctx.drawImage(img, 0, 0);
 
-  // Get the pixel data from the canvas
+  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  ctx.putImageData(imageData, 0, 0);
+
+
+  // Step 1: Apply Gaussian Blur to reduce noise
+  applyGaussianBlur(ctx, canvas.width, canvas.height, 1);
+
+  // Step 2: Convert the image to greyscale
+  convertToGrayscale(canvas, ctx);
+
+  // Step 3: Enhance the contrast
+  // TODO: Dynamic enhancement factor based on pic (range: 1,3 - 2)?
+  enhanceContrast(canvas, ctx);
+
+  // Values ranging from 4.5 - 5.5 maybe, higher value --> less enhancement?
+  console.log(calculateAverageContrast(canvas, ctx));
+
+
+  autoDownloadCanvas(canvas, 'final-image.png');
+
+  return canvas; // Return the preprocessed canvas
+}
+
+/**
+ * Automatically triggers the download of the image from the canvas.
+ * @param {HTMLCanvasElement} canvas - The canvas element containing the image to download.
+ * @param {string} filename - The name of the file to be saved as.
+ */
+function autoDownloadCanvas(canvas, filename) {
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = canvas.toDataURL('image/png');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+
+/**
+ * Apply contrast enhancement to an image by stretching the intensity levels and applying a contrast factor.
+ * @param {HTMLCanvasElement} canvas - The canvas element containing the image.
+ * @param {CanvasRenderingContext2D} ctx - The 2D context of the canvas.
+ * @param {number} lowPercentile - The lower percentile for contrast stretching (e.g., 5).
+ * @param {number} highPercentile - The upper percentile for contrast stretching (e.g., 95).
+ * @param {number} contrastFactor - The factor by which to increase the contrast (e.g., 1.2 for 20% more contrast).
+ */
+function enhanceContrast(canvas, ctx, lowPercentile = 1, highPercentile = 99, contrastFactor = 1.7) {
+  // Get the image data
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
 
-  let totalBrightness = 0;
-  let pixelCount = 0;
-
-  // Calculate the brightness by averaging the grayscale values
+  // Step 1: Find the minimum and maximum pixel intensities at the given percentiles
+  const grayscaleValues = [];
   for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    totalBrightness += avg;
-    pixelCount++;
+    const gray = data[i]; // Red, Green, and Blue values are the same in grayscale
+    grayscaleValues.push(gray);
   }
 
-  const averageBrightness = totalBrightness / pixelCount;
-  // Set a dynamic threshold slightly below the average brightness
-  const dynamicThreshold = averageBrightness * 0.87;
-  // Apply the dynamic threshold to convert the image to high contrast
-  for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    const newValue = avg > dynamicThreshold ? 255 : 0;
+  // Sort grayscale values
+  grayscaleValues.sort((a, b) => a - b);
 
-    data[i] = newValue;        // Red
-    data[i + 1] = newValue;    // Green
-    data[i + 2] = newValue;    // Blue
+  const lowIndex = Math.floor((lowPercentile / 100) * grayscaleValues.length);
+  const highIndex = Math.floor((highPercentile / 100) * grayscaleValues.length);
+
+  const minValue = grayscaleValues[lowIndex]; // Lower bound intensity
+  const maxValue = grayscaleValues[highIndex]; // Upper bound intensity
+
+  // Step 2: Apply contrast stretching to each pixel and apply the contrast factor
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = data[i];
+
+    // Apply contrast enhancement formula
+    let enhancedGray = ((gray - minValue) / (maxValue - minValue)) * 255;
+
+    // Apply contrast factor (center the contrast around 128)
+    enhancedGray = 128 + (enhancedGray - 128) * contrastFactor;
+
+    // Clamp the value to be between 0 and 255
+    const clampedGray = Math.max(0, Math.min(255, enhancedGray));
+
+    // Set the new intensity value back to R, G, B channels
+    data[i] = data[i + 1] = data[i + 2] = clampedGray;
   }
 
-  // Update the canvas with the new high-contrast data
+  // Step 3: Put the enhanced image data back onto the canvas
   ctx.putImageData(imageData, 0, 0);
-
-  // Create a download link (optional)
-  const link = document.createElement('a');
-  link.href = canvas.toDataURL(); // Get the image data URL
-  link.download = 'ocr-optimized-image.png'; // Set the filename for download
-  link.click(); // Simulate a click to download the image
-
-  return canvas; // Return the canvas element with the high-contrast image
 }
+
+
+/**
+ * Applies a Gaussian blur to the image to reduce noise.
+ * @param {CanvasRenderingContext2D} ctx - The canvas context.
+ * @param {number} width - The width of the canvas.
+ * @param {number} height - The height of the canvas.
+ * @param {number} radius - The radius of the blur (default is 1.0).
+ */
+function applyGaussianBlur(ctx, width, height, radius = 1.0) {
+  ctx.filter = `blur(${radius}px)`; // Apply blur filter with the specified radius
+  ctx.drawImage(ctx.canvas, 0, 0);  // Redraw the image with blur applied
+}
+
+/**
+ * Converts an image on a canvas to grayscale.
+ * @param {HTMLCanvasElement} canvas - The canvas element containing the image.
+ * @param {CanvasRenderingContext2D} ctx - The 2D context of the canvas.
+ */
+function convertToGrayscale(canvas, ctx) {
+  // Get the image data (pixels) from the canvas
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data; // This is a flat array with RGBA values
+
+  // Loop through each pixel in the image
+  for (let i = 0; i < data.length; i += 4) {
+    // Get the red, green, and blue values
+    const red = data[i];
+    const green = data[i + 1];
+    const blue = data[i + 2];
+
+    // Calculate the average value to use as the grayscale value (common method)
+    const grayscale = (red + green + blue) / 3;
+
+    // Set the red, green, and blue channels to the grayscale value
+    data[i] = data[i + 1] = data[i + 2] = grayscale;
+    // Alpha (data[i + 3]) remains unchanged
+  }
+
+  // Put the updated pixel data back to the canvas
+  ctx.putImageData(imageData, 0, 0);
+}
+
+
+/**
+ * Calculate the average contrast of an image based on pixel intensity differences with neighbors.
+ * @param {HTMLCanvasElement} canvas - The canvas element containing the image.
+ * @param {CanvasRenderingContext2D} ctx - The 2D context of the canvas.
+ * @returns {number} - The average contrast of the image.
+ */
+function calculateAverageContrast(canvas, ctx) {
+  // Get the image data
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const width = canvas.width;
+  const height = canvas.height;
+
+  let totalDifference = 0;
+  let comparisonCount = 0;
+
+  // Loop through each pixel in the image
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      // Get the index of the current pixel (R channel, assuming grayscale)
+      const index = (y * width + x) * 4;
+      const currentPixel = data[index]; // Use red channel for grayscale intensity
+
+      // Check neighboring pixels (top, right, bottom, left)
+      const neighbors = [
+        getPixelValue(x, y - 1, width, height, data), // Top neighbor
+        getPixelValue(x + 1, y, width, height, data), // Right neighbor
+        getPixelValue(x, y + 1, width, height, data), // Bottom neighbor
+        getPixelValue(x - 1, y, width, height, data)  // Left neighbor
+      ];
+
+      // Calculate the total difference between the current pixel and its neighbors
+      neighbors.forEach((neighbor) => {
+        if (neighbor !== null) {
+          totalDifference += Math.abs(currentPixel - neighbor);
+          comparisonCount++;
+        }
+      });
+    }
+  }
+
+  // Calculate and return the average contrast
+  const averageContrast = totalDifference / comparisonCount;
+  return averageContrast;
+}
+
+/**
+ * Helper function to get the grayscale value of a pixel at (x, y).
+ * Returns null if the coordinates are out of bounds.
+ * @param {number} x - The x coordinate of the pixel.
+ * @param {number} y - The y coordinate of the pixel.
+ * @param {number} width - The width of the image.
+ * @param {number} height - The height of the image.
+ * @param {Uint8ClampedArray} data - The image data array.
+ * @returns {number|null} - The grayscale value of the pixel or null if out of bounds.
+ */
+function getPixelValue(x, y, width, height, data) {
+  if (x < 0 || y < 0 || x >= width || y >= height) {
+    return null; // Out of bounds
+  }
+  const index = (y * width + x) * 4;
+  return data[index]; // Return the red channel as the grayscale value
+}
+
 
 /**
  * Converts an array of receipt rows into a dictionary format.
@@ -150,8 +306,12 @@ function preprocessImage(img) {
 function arrToDict(receiptList) {
   // Clean up and split each row into words
   for (let i = 0; i < receiptList.length; i++) {
-    // Remove all line breaks (\n) and split the string into an array of words
-    receiptList[i] = receiptList[i].replace(/\n/g, "").split(" ");
+    // Remove all line breaks (\n)
+    receiptList[i] = receiptList[i].replace(/\n/g, "");
+    // Replace everey "]"
+    receiptList[i] = receiptList[i].replace("]", "l");
+    // Split the string into an array
+    receiptList[i] = receiptList[i].split(" ");
   }
 
   // Convert the array of rows to a dictionary
