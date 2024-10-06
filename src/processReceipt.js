@@ -1,3 +1,5 @@
+import { fuzzyMatch, getCategories } from "./categoryMatching";
+
 /**
  * Processes the receipt dictionary and extracts relevant information.
  * Cleans the rows, identifies the store, extracts the date, 
@@ -76,11 +78,15 @@ export function processReceiptItems(receipt) {
     // Apply the discounts
     const receiptDiscount = extractDiscountRows(receiptDict);
     receiptItems = applyDiscounts(receiptItems, receiptDiscount);
-    console.log(receiptItems);
+    console.log(receiptItems); 
+
+    addCategories(receiptItems);
 
     // TODO
     // Categories (fuzzy matching)
-    // KG row handndling (kg row contains price at Kaufland)
+    // Pfandrückgabe Lidl, ...(?) adjustment
+    // kg row handling (kg row contains price at Kaufland)
+    // Sie sparen... row filter (Kaufland)
     // Errors/Edge Cases
     // Testing
 
@@ -136,7 +142,7 @@ class ReceiptItem {
         this.category = '';
     }
 
-    // Apply a discount to the price (-0,60)
+    // Apply a discount to the price (e.g. -0,60)
     applyDiscount(discount) {
         discount = discount/this.amount;
         if (discount > 0) {
@@ -157,6 +163,64 @@ class ReceiptItem {
         return this.price * this.amount;
     }
 }
+
+
+/**
+ * Categorizes receipt items by matching them to predefined categories using fuzzy matching.
+ * @param {Array} receiptItems - List of receipt items, each with a `name` property.
+ * @returns {void}
+ */
+function addCategories(receiptItems) {
+    // Retrieve pre-defined categories
+    const categories = getCategories();
+    // Initialize variables for distance and matching category
+    let distance = Infinity;
+    let matching_key = '';
+    let matching_value = '';
+
+    // Loop through each item in the receipt
+    for (let i = 0; i < receiptItems.length; i++) {
+        let current_item_name = receiptItems[i].name;
+
+        // Replace store-specific name parts (e.g., "KLC", "G&G")
+        current_item_name = current_item_name.replace("KLC.", "");
+        current_item_name = current_item_name.replace("KLC ", "");
+        current_item_name = current_item_name.replace("KLC", "");
+        current_item_name = current_item_name.replace("G&G_", "");
+        current_item_name = current_item_name.replace("G&G", "");
+
+        // Convert the item name to lowercase for case-insensitive matching
+        current_item_name = current_item_name.toLowerCase();
+
+        // Loop through each category
+        for (let key in categories) {
+            // Loop through each item in the category
+            for (let j = 0; j < categories[key].length; j++) {
+                // Get the category item in lowercase
+                let category_item = categories[key][j].toLowerCase();
+
+                // Perform fuzzy matching between the item name and category item
+                const new_distance = fuzzyMatch(current_item_name, category_item);
+
+                // Update matching category if a closer match (lower distance) is found
+                if (new_distance < distance) {
+                    matching_key = key;
+                    matching_value = categories[key][j];
+                    distance = new_distance;
+                }
+            }
+        }
+
+        // Log the current item name, matching category, matching item, and distance
+        console.log(current_item_name, matching_key, matching_value, distance);
+
+        // Reset matching variables for the next item
+        matching_key = '';
+        matching_value = '';
+        distance = Infinity;
+    }
+}
+
 
 /**
  * Creates receipt items from the processed Lidl/Edeka receipt dictionary.
@@ -214,7 +278,7 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
  */
 function createReceiptItemsNetto(receiptOnlyItemsDict) {
     const items = [];
-    let only_amount_row = false; // Flag for name-only rows
+    let only_amount_row = false; // Flag for amount-only rows
     let last_single_price = 0;
 
     for (let key in receiptOnlyItemsDict) {
@@ -416,12 +480,12 @@ function cleanRows(receiptDict) {
         }
     }
 
-    // Remove elements from the end of the row if they have less than 3 digits, 'A', or 'B'
+    // Remove elements from the end of the row if they have less than 3 digits, 'A', or 'B' or 'D'
     for (let key in receiptDict) {
         for (let i = receiptDict[key].length - 1; i >= 0; i--) {
             const current_element = receiptDict[key][i];
             if (receiptDict[key].length === 1) continue; // Skip single-element rows
-            if (current_element === 'A' || current_element === 'B' || current_element.length < 3) {
+            if (current_element === 'A' || current_element === 'B' || current_element === 'D' || current_element.length < 3) {
                 receiptDict[key].splice(i, 1);
             } else {
                 break; // Stop once a valid element is found
@@ -442,7 +506,7 @@ function cleanRows(receiptDict) {
         // Get the last element
         let lastElement = String(receiptDict[key][receiptDict[key].length - 1]);
     
-        // Replace patterns like *A, *B, +*A, +*B
+        // Replace patterns like *A, *B, +*A, +*B (also replace OCR reading errors)
         lastElement = lastElement
             .replace("+*A", "")
             .replace("+*B", "")
@@ -679,7 +743,7 @@ function removeDiscountRows(receiptDict) {
 function getPossibleStores() {
     return {
         "Kaufland": ["Kaufland", "KAUFLAND", "KLC", "Bergsteig", "09621/78260"],
-        "Lidl": ["Lidl", "LIDL", "Barbarastr", "Hirschauer", "L4DL", "L$DE"],
+        "Lidl": ["Lidl", "LIDL", "Barbarastr", "Hirschauer", "L4DL", "L$DE", "Lid)", "Li1dl"],
         "Netto": ["Netto", "NETTO", "Mosacher", "Deutschlandcard", "Marken-Discount"],
         "Edeka": ["Edeka", "EDEKA", "Wiesmeth", "Pfistermeisterstr", "G&G", "Kuhnert"],
         "Aldi": ["Aldi", "ALDI"],

@@ -53,6 +53,7 @@ function App() {
     else if (type === 'pdf' && file.type === 'application/pdf') {
       await handlePDFPreview(file); // Wait for PDF preview
     } else {
+      // Redundant check, but fail safe this way
       alert('Unsupported file type.'); // Show an error if the file type is unsupported
     }
   };
@@ -127,7 +128,7 @@ function App() {
         const receipt = processReceiptDict(text_dict); // Process the extracted text into a receipt object
         startUserConfirmationStoreAndDate(receipt); // Begin user confirmation of store and date
       } catch (err) {
-        console.error(err, "TEST");
+        console.error(err);
       }
     }
     // Handle extraction for PDF files using PDF.js
@@ -278,17 +279,6 @@ function App() {
           <Check onClick={handleUserConfirmationStoreAndDate} className="check-data-icon" />
         </div>
       )}
-      <div>
-        {receiptItems && receiptItems.length > 0 ? (
-          receiptItems.map((item, index) => (
-            <div key={index}>
-              <p>{item.name}, {item.price}, {item.amount}</p>
-            </div>
-          ))
-        ) : (
-          <p>No items found</p>
-        )}
-      </div>
     </div>
   );
 }

@@ -62,7 +62,7 @@ export async function extractFromPDF(file) {
 
 /**
  * Extracts text from an image using Optical Character Recognition (OCR) via Tesseract.js.
- * The image is preprocessed (converted to grayscale) before the OCR process.
+ * The image is preprocessed before the OCR process.
  * @param {HTMLImageElement} img - The image element to process.
  * @param {string} [language='deu'] - The language to use for OCR (default is German).
  * @returns {Promise<Object>} - A Promise that resolves to a dictionary of receipt rows.
@@ -104,6 +104,8 @@ function preprocessImage(img) {
   let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   ctx.putImageData(imageData, 0, 0);
 
+  // Replace light blue with black for Lidl Plus App Receipt (Lidl Plus Rabatt)
+  replaceColorRange(canvas, ctx, "#70c0e5", 30);
 
   // Step 1: Apply Gaussian Blur to reduce noise
   applyGaussianBlur(ctx, canvas.width, canvas.height, 1);
@@ -115,11 +117,7 @@ function preprocessImage(img) {
   // TODO: Dynamic enhancement factor based on pic (range: 1,3 - 2)?
   enhanceContrast(canvas, ctx);
 
-  // Values ranging from 4.5 - 5.5 maybe, higher value --> less enhancement?
-  console.log(calculateAverageContrast(canvas, ctx));
-
-
-  autoDownloadCanvas(canvas, 'final-image.png');
+  // autoDownloadCanvas(canvas, 'final-image.png');
 
   return canvas; // Return the preprocessed canvas
 }
@@ -202,6 +200,7 @@ function applyGaussianBlur(ctx, width, height, radius = 1.0) {
   ctx.drawImage(ctx.canvas, 0, 0);  // Redraw the image with blur applied
 }
 
+
 /**
  * Converts an image on a canvas to grayscale.
  * @param {HTMLCanvasElement} canvas - The canvas element containing the image.
@@ -233,67 +232,67 @@ function convertToGrayscale(canvas, ctx) {
 
 
 /**
- * Calculate the average contrast of an image based on pixel intensity differences with neighbors.
+ * Replaces a specific light blue color and colors within a tolerance range with black in a canvas image.
  * @param {HTMLCanvasElement} canvas - The canvas element containing the image.
  * @param {CanvasRenderingContext2D} ctx - The 2D context of the canvas.
- * @returns {number} - The average contrast of the image.
+ * @param {string} color - The target color in hex to be replaced.
+ * @param {number} tolerance - The tolerance range (0-255) for color matching. Higher values make the matching more lenient.
  */
-function calculateAverageContrast(canvas, ctx) {
-  // Get the image data
+function replaceColorRange(canvas, ctx, color, tolerance) {
+  // Get the image data from the canvas
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
-  const width = canvas.width;
-  const height = canvas.height;
 
-  let totalDifference = 0;
-  let comparisonCount = 0;
+  // Convert hex color to RGB
+  const targetColor = hexToRgb(color);
 
-  // Loop through each pixel in the image
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      // Get the index of the current pixel (R channel, assuming grayscale)
-      const index = (y * width + x) * 4;
-      const currentPixel = data[index]; // Use red channel for grayscale intensity
+  // Loop through every pixel in the image
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];     // Red channel
+    const g = data[i + 1]; // Green channel
+    const b = data[i + 2]; // Blue channel
 
-      // Check neighboring pixels (top, right, bottom, left)
-      const neighbors = [
-        getPixelValue(x, y - 1, width, height, data), // Top neighbor
-        getPixelValue(x + 1, y, width, height, data), // Right neighbor
-        getPixelValue(x, y + 1, width, height, data), // Bottom neighbor
-        getPixelValue(x - 1, y, width, height, data)  // Left neighbor
-      ];
-
-      // Calculate the total difference between the current pixel and its neighbors
-      neighbors.forEach((neighbor) => {
-        if (neighbor !== null) {
-          totalDifference += Math.abs(currentPixel - neighbor);
-          comparisonCount++;
-        }
-      });
+    // Check if the pixel color is within the tolerance range of the target color
+    if (isColorInRange(r, g, b, targetColor, tolerance)) {
+      // Change the pixel color to black (RGB: 0, 0, 0)
+      data[i] = 0;     // Red channel
+      data[i + 1] = 0; // Green channel
+      data[i + 2] = 0; // Blue channel
     }
   }
 
-  // Calculate and return the average contrast
-  const averageContrast = totalDifference / comparisonCount;
-  return averageContrast;
+  // Put the modified image data back onto the canvas
+  ctx.putImageData(imageData, 0, 0);
+}
+
+
+/**
+ * Helper function to convert a hex color code to an RGB object.
+ * @param {string} hex - The hex color code (e.g., "#ADD8E6").
+ * @returns {Object} - An object with r, g, and b properties.
+ */
+function hexToRgb(hex) {
+  const bigint = parseInt(hex.slice(1), 16);
+  return {
+    r: (bigint >> 16) & 255,
+    g: (bigint >> 8) & 255,
+    b: bigint & 255
+  };
 }
 
 /**
- * Helper function to get the grayscale value of a pixel at (x, y).
- * Returns null if the coordinates are out of bounds.
- * @param {number} x - The x coordinate of the pixel.
- * @param {number} y - The y coordinate of the pixel.
- * @param {number} width - The width of the image.
- * @param {number} height - The height of the image.
- * @param {Uint8ClampedArray} data - The image data array.
- * @returns {number|null} - The grayscale value of the pixel or null if out of bounds.
+ * Checks if the RGB color is within the tolerance range of the target color.
+ * @param {number} r - Red value of the pixel.
+ * @param {number} g - Green value of the pixel.
+ * @param {number} b - Blue value of the pixel.
+ * @param {Object} targetColor - The target color object with r, g, and b properties.
+ * @param {number} tolerance - The tolerance range for color matching.
+ * @returns {boolean} - True if the color is within the tolerance range, otherwise false.
  */
-function getPixelValue(x, y, width, height, data) {
-  if (x < 0 || y < 0 || x >= width || y >= height) {
-    return null; // Out of bounds
-  }
-  const index = (y * width + x) * 4;
-  return data[index]; // Return the red channel as the grayscale value
+function isColorInRange(r, g, b, targetColor, tolerance) {
+  return Math.abs(r - targetColor.r) <= tolerance &&
+         Math.abs(g - targetColor.g) <= tolerance &&
+         Math.abs(b - targetColor.b) <= tolerance;
 }
 
 
@@ -310,6 +309,8 @@ function arrToDict(receiptList) {
     receiptList[i] = receiptList[i].replace(/\n/g, "");
     // Replace everey "]"
     receiptList[i] = receiptList[i].replace("]", "l");
+    // Replace everey ")"
+    receiptList[i] = receiptList[i].replace(")", "l");
     // Split the string into an array
     receiptList[i] = receiptList[i].split(" ");
   }
