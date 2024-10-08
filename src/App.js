@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import './App.css';
-import { Camera, Trash2, FileText, Check, LoaderCircle } from 'lucide-react';
+import { Camera, Trash2, FileText, Check, LoaderCircle, ImageOff } from 'lucide-react';
 
 import { extractFromImage, extractFromPDF } from './extractTextFromFile';
 import { processReceiptDict, processReceiptItems, getPossibleStoreKeys } from './processReceipt';
@@ -19,6 +19,7 @@ function App() {
   const [imgElement, setImgElement] = useState(null); // Store the actual Image element for OCR extraction
   const [store, setStore] = useState(null); // Store the user-selected or extracted store name
   const [date, setDate] = useState(null); // Store the user-selected or extracted date
+  const [extractionError, setExtractionError] = useState(null); // Store the extraction error message
   const [receipt, setReceipt] = useState(null); // Store the processed receipt object
   const [receiptItems, setReceiptItems] = useState(null); // Store the extracted ReceiptItems
 
@@ -128,7 +129,7 @@ function App() {
         const receipt = processReceiptDict(text_dict); // Process the extracted text into a receipt object
         startUserConfirmationStoreAndDate(receipt); // Begin user confirmation of store and date
       } catch (err) {
-        console.error(err);
+        setExtractionError(err.message); // Store the error message for display
       }
     }
     // Handle extraction for PDF files using PDF.js
@@ -138,7 +139,7 @@ function App() {
         const receipt = processReceiptDict(text_dict); // Process the extracted text into a receipt object
         startUserConfirmationStoreAndDate(receipt); // Begin user confirmation of store and date
       } catch (err) {
-        console.error(err);
+        setExtractionError(err.message); // Store the error message for display
       }
     }
 
@@ -150,7 +151,12 @@ function App() {
    * @param {Object} receipt - The receipt object that has been processed and confirmed by the user.
    */
   const runReceiptItems = (receipt) => {
-    setReceiptItems(processReceiptItems(receipt)); // Process the receipt items (store-specific logic)
+    try {
+      setReceiptItems(processReceiptItems(receipt)); // Process the receipt items (store-specific logic)
+    }
+    catch (err) {
+      setExtractionError(err.message); // Store the error message for display
+    }
   };
 
   /**
@@ -184,6 +190,7 @@ function App() {
     setImgElement(null); // Clear the image element
     setIsLoading(false); // Reset loading state
     setIsUserConfirmedStoreDate(false); // Reset user confirmation state
+    setExtractionError(null); // Clear the extraction error message
     setReceipt(null); // Clear the Receipt dict
     setReceiptItems(null) // Clear the ReceiptItem array
   };
@@ -213,72 +220,86 @@ function App() {
   };
 
   return (
+    
     <div className="App">
-      <header className="App-header"></header>
-      <div>
-        {/* Hidden input for images */}
-        <input
-          type="file"
-          accept="image/*"
-          ref={imgInputRef}
-          style={{ display: 'none' }}
-          onChange={(e) => handleFileChange(e, 'image')}
-        />
-        {/* Hidden input for PDFs */}
-        <input
-          type="file"
-          accept="application/pdf"
-          ref={pdfInputRef}
-          style={{ display: 'none' }}
-          onChange={(e) => handleFileChange(e, 'pdf')}
-        />
-
-        {/* Camera Icon triggers the image input */}
-        <Camera onClick={handleCamIconClick} className="camera-icon" />
-        {/* File Icon triggers the PDF input */}
-        <FileText onClick={handleFileIconClick} className="file-icon" />
-        {/* Trash Icon resets the file selection */}
-        <Trash2 onClick={resetFile} className="trash-icon" />
-        <p>Click the camera icon to select an image, or the file icon to select a PDF.</p>
-
-        {/* Display the selected file name */}
-        {selectedFile && <p>{selectedFile.name}</p>}
-      </div>
-
-      {/* Display the preview */}
-      {imageData && (
-        <div className="preview_image">
-          <img src={imageData} alt="Preview" />
-        </div>
-      )}
-
-      {/* Display the confirm button (Check icon) only after file is selected */}
-      {selectedFile && !isPicExtractionConfirmed && !isLoading && (
-        <Check onClick={handleFileConfirmClick} className="check-file-icon" />
-      )}
-
-      {/* Display loading message when extraction is in progress */}
-      {isLoading && (
-        <LoaderCircle className="loader-circle-icon" />
-      )}
-
-      {/* Display store and date confirmation after file extraction */}
-      {isPicExtractionConfirmed && !isLoading && !isUserConfirmedStoreDate && (
+      <div className="App-body">
         <div>
-          {/* Dropdown for selecting or confirming the store */}
-          <select defaultValue={store} onChange={(e) => setStore(e.target.value)}>
-            {possibleStores.map((storeOption, index) => (
-              <option key={index} value={storeOption}>{storeOption}</option>
-            ))}
-          </select>
+          {/* Hidden input for images */}
+          <input
+            type="file"
+            accept="image/*"
+            ref={imgInputRef}
+            style={{ display: 'none' }}
+            onChange={(e) => handleFileChange(e, 'image')}
+          />
+          {/* Hidden input for PDFs */}
+          <input
+            type="file"
+            accept="application/pdf"
+            ref={pdfInputRef}
+            style={{ display: 'none' }}
+            onChange={(e) => handleFileChange(e, 'pdf')}
+          />
 
-          {/* Input field for confirming or editing the date */}
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          
-          {/* Check icon to confirm store and date */}
-          <Check onClick={handleUserConfirmationStoreAndDate} className="check-data-icon" />
+          {/* Camera Icon triggers the image input */}
+          <Camera onClick={handleCamIconClick} className="camera-icon" />
+          {/* File Icon triggers the PDF input */}
+          <FileText onClick={handleFileIconClick} className="file-icon" />
+          {/* Trash Icon resets the file selection */}
+          <Trash2 onClick={resetFile} className="trash-icon" />
+          <p>Click the camera icon to select an image, or the file icon to select a PDF.</p>
+
+          {/* Display the selected file name */}
+          {selectedFile && <p>{selectedFile.name}</p>}
         </div>
-      )}
+
+        {/* Display the preview */}
+        {imageData && (
+          <div className="preview_image">
+            <img src={imageData} alt="Preview" />
+          </div>
+        )}
+
+        {/* Display the confirm button (Check icon) only after file is selected */}
+        {selectedFile && !isPicExtractionConfirmed && !isLoading && (
+          <Check onClick={handleFileConfirmClick} className="check-file-icon" />
+        )}
+
+        {/* Display loading message when extraction is in progress */}
+        {isLoading && (
+          <LoaderCircle className="loader-circle-icon" />
+        )}
+
+        {/* Display extraction error message if extraction fails */}
+        {extractionError && (
+          <div>
+            <ImageOff className="error-icon" />
+            <p className="error-message">{extractionError}</p>
+          </div>
+        )}
+
+        {/* Display store and date confirmation after file extraction */}
+        {isPicExtractionConfirmed && !isLoading && !isUserConfirmedStoreDate && !extractionError && (
+          <div className ="container-store-date-check">
+            <div className="container-store-date">
+                <div className="container-store">
+                  {/* Dropdown for selecting or confirming the store */}
+                  <select defaultValue={store} onChange={(e) => setStore(e.target.value)}>
+                    {possibleStores.map((storeOption, index) => (
+                      <option key={index} value={storeOption}>{storeOption}</option>
+                    ))}
+                  </select>
+                </div>
+              <div className="container-date">
+                {/* Input field for confirming or editing the date */}
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              </div>
+            </div>
+            {/* Check icon to confirm store and date */}
+            <Check onClick={handleUserConfirmationStoreAndDate} className="check-data-icon" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

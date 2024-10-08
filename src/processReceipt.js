@@ -11,7 +11,7 @@ import { fuzzyMatch, getCategories } from "./categoryMatching";
 export function processReceiptDict(receiptDict) {
     //TODO Error Handling, Edge Cases
 
-    if (!receiptDict) {
+    if (!receiptDict || getDictLength(receiptDict) === 0) {
         throw new Error('Receipt text couldn’t be extracted');
     }
 
@@ -30,7 +30,7 @@ export function processReceiptDict(receiptDict) {
     // Step 4: Extract the total sum from the receipt
     const receiptSum = extractSum(relevantReceiptDict);
 
-    if (!relevantReceiptDict || Object.keys(relevantReceiptDict).length === 0) {
+    if (!relevantReceiptDict || getDictLength(relevantReceiptDict) === 0) {
         throw new Error('Unable to process the receipt.');
     }
 
@@ -75,6 +75,10 @@ export function processReceiptItems(receipt) {
             console.log("Store yet to be processed, using default method");
     }
 
+    if (receiptItems.length === 0) {
+        throw new Error('No Items found in the receipt.');
+    }
+
     // Apply the discounts
     const receiptDiscount = extractDiscountRows(receiptDict);
     receiptItems = applyDiscounts(receiptItems, receiptDiscount);
@@ -83,7 +87,7 @@ export function processReceiptItems(receipt) {
     addCategories(receiptItems);
 
     // TODO
-    // Categories (fuzzy matching)
+    // Categories (fuzzy matching, possible weight adjustments)
     // Pfandrückgabe Lidl, ...(?) adjustment
     // kg row handling (kg row contains price at Kaufland)
     // Sie sparen... row filter (Kaufland)
