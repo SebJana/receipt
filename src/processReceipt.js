@@ -25,8 +25,8 @@ export function processReceiptDict(receiptDict) {
     // Step 3: Extract the relevant part of the receipt (items, prices, etc.)
     let relevantReceiptDict = cutReceipt(cleanReceiptDict);
     console.log(relevantReceiptDict);
-    relevantReceiptDict = removeKgPriceRows(relevantReceiptDict);
-
+    // relevantReceiptDict = removeKgPriceRows(relevantReceiptDict);
+ 
     // Step 4: Extract the total sum from the receipt
     const receiptSum = extractSum(relevantReceiptDict);
 
@@ -51,23 +51,32 @@ export function processReceiptItems(receipt) {
 
     // Copy original receipt dict
     let receiptOnlyItemsDict = {...receiptDict};
-    // Remove discount-related rows from the receipt
+
+    // Remove non-item-related rows from the receipt
     receiptOnlyItemsDict = removeDiscountRows(receiptOnlyItemsDict);
+    receiptOnlyItemsDict = removeSpecialInfoRows(receiptOnlyItemsDict);
+    receiptOnlyItemsDict = removeSummeRow(receiptOnlyItemsDict);
+
+    console.log(receiptOnlyItemsDict);
 
     let receiptItems = [];
 
     // Process items differently based on the store
     switch (receipt.store) {
         case "Kaufland":
+            // Dont remove the kg info rows, as they contain the price
             receiptItems = createReceiptItemsKaufland(receiptOnlyItemsDict);
             break;
         case "Lidl":
+            receiptOnlyItemsDict = removeKgPriceRows(receiptOnlyItemsDict);
             receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
             break;
         case "Edeka":
+            receiptOnlyItemsDict = removeKgPriceRows(receiptOnlyItemsDict);
             receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
             break;
         case "Netto":
+            receiptOnlyItemsDict = removeKgPriceRows(receiptOnlyItemsDict);
             receiptItems = createReceiptItemsNetto(receiptOnlyItemsDict);
             break
         default:
@@ -88,10 +97,9 @@ export function processReceiptItems(receipt) {
 
     // TODO
     // Categories (fuzzy matching, possible weight adjustments)
-    // Pfandrückgabe Lidl, ...(?) adjustment
-    // kg row handling (kg row contains price at Kaufland)
-    // Sie sparen... row filter (Kaufland)
+    // Pfandrückgabe Lidl, ...(?) adjustment // CHECK for Lidl, waiting if there are also more stores with that logic
     // Errors/Edge Cases
+    // !Split File into sub files for better readability and maintainability (e.g. ReceiptModel.js, ReceiptProcessing.js, CategoryMatching.js)
     // Testing
 
     return receiptItems;
@@ -142,7 +150,7 @@ class ReceiptItem {
         this.index = index;
         this.name = name;
         this.price = price || 0; // Default price to 0 if unknown
-        this.amount = amount || 0; // Default amount to 0 if unknown
+        this.amount = amount || 1; // Default amount to 1 if unknown
         this.category = '';
     }
 
@@ -185,13 +193,10 @@ function addCategories(receiptItems) {
     // Loop through each item in the receipt
     for (let i = 0; i < receiptItems.length; i++) {
         let current_item_name = receiptItems[i].name;
-
+        
         // Replace store-specific name parts (e.g., "KLC", "G&G")
-        current_item_name = current_item_name.replace("KLC.", "");
-        current_item_name = current_item_name.replace("KLC ", "");
-        current_item_name = current_item_name.replace("KLC", "");
-        current_item_name = current_item_name.replace("G&G_", "");
-        current_item_name = current_item_name.replace("G&G", "");
+        const possible_prefixes = getPossibleStoreSpecificNamePrefixes();
+        current_item_name = replaceFromLookupArray(current_item_name, possible_prefixes);
 
         // Convert the item name to lowercase for case-insensitive matching
         current_item_name = current_item_name.toLowerCase();
@@ -229,9 +234,14 @@ function addCategories(receiptItems) {
 /**
  * Creates receipt items from the processed Lidl/Edeka receipt dictionary.
  * @param {Object} receiptOnlyItemsDict - Dictionary of receipt items after filtering.
+ * @returns {Array<ReceiptItem>} - The created array of receipt items.
  */
 function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
     const items = [];
+
+    let pfandrückgabe_row = false; // Flag for Pfandrückgabe rows
+    let last_total_price = 0;
+    let last_key = 0;
 
     for (let key in receiptOnlyItemsDict) {
         if(receiptOnlyItemsDict[key].length < 2){
@@ -241,17 +251,28 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
         const last_index = receiptOnlyItemsDict[key].length - 1;
         const last_elem = receiptOnlyItemsDict[key][last_index];
         const second_last_elem = receiptOnlyItemsDict[key][last_index-1];
-        const third_last_elem = receiptOnlyItemsDict[key][last_index-2];
 
         // Regular row
         if(convertToNumber(last_elem)){
-            // Multiple Items
             const total_price = convertToNumber(last_elem);
+
+            // Row after Pfandrückgabe (Lidl-specific logic)
+            if (pfandrückgabe_row){
+                const name= "Pfandrückgabe";
+                const single_price = convertToNumber(last_elem);
+                const amount = Number((last_total_price / single_price).toFixed(2));
+                const item = new ReceiptItem(convertToNumber(key),name,single_price,amount);
+                items.push(item);
+                pfandrückgabe_row = false;
+                continue;
+            }
+            // Regular multiple items row
             if(convertToNumber(second_last_elem)){
                 const amount = convertToNumber(second_last_elem);
                 const single_price = Number((total_price/amount).toFixed(2));
                 // Determine the amount of elements to leave out for the name
                 let elems_to_leave_out = 0;
+                const third_last_elem = receiptOnlyItemsDict[key][last_index-2];
                 if(third_last_elem === "x" || third_last_elem === "X"){
                     elems_to_leave_out = 4;
                 }
@@ -262,6 +283,15 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
 
                 const item = new ReceiptItem(convertToNumber(key),name,single_price,amount);
                 items.push(item);
+                continue;
+            }
+            // Check if Pfandrückgabe (Lidl-specific logic)
+            if(convertToNumber(last_elem) < 0 && second_last_elem.includes("Pfand")){
+                pfandrückgabe_row = true;
+                last_total_price = total_price;
+                last_key = convertToNumber(key);
+                continue;
+
             }
             // Single items
             else{
@@ -271,6 +301,14 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
             }
             
         }
+        // Error handling
+        if(pfandrückgabe_row && !convertToNumber(last_elem)){
+            // Reset flag if no number is found, so that flag is not set indefinetely
+            // Only if the the loop is already at the next row
+            if(convertToNumber(key)!==last_key){
+                pfandrückgabe_row = false;
+            }
+        }
     }
 
     return(items);
@@ -279,6 +317,7 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
 /**
  * Creates receipt items from the processed Netto receipt dictionary.
  * @param {Object} receiptOnlyItemsDict - Dictionary of receipt items after filtering.
+ * @returns {Array<ReceiptItem>} - The created array of receipt items.
  */
 function createReceiptItemsNetto(receiptOnlyItemsDict) {
     const items = [];
@@ -335,6 +374,7 @@ function createReceiptItemsNetto(receiptOnlyItemsDict) {
 /**
  * Creates receipt items from the processed Kaufland receipt dictionary.
  * @param {Object} receiptOnlyItemsDict - Dictionary of receipt items after filtering.
+ * @returns {Array<ReceiptItem>} - The created array of receipt items.
  */
 function createReceiptItemsKaufland(receiptOnlyItemsDict) {
     const items = [];
@@ -361,16 +401,31 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
         if (!convertToNumber(last_elem) && !only_name_row) {
             only_name_row = true;
             last_name = concatenatItemNameString(receiptOnlyItemsDict[key], 0);
-            last_key = key;
+            last_key = convertToNumber(key);
             continue;
         }
 
-        // Handle rows after encountering a name-only row, must include '*'
+        // Handle rows after encountering a name-only row, must include '*' or 'kg'
         if (only_name_row) {
+            // Rows containing '*'(multiples)
             if (receiptOnlyItemsDict[key].some(item => /\*/.test(item))) {
                 const item = createItemMultipleKaufland(last_key, last_name, receiptOnlyItemsDict[key]);
                 items.push(item);
             }
+            // Rows containing 'kg' (price per kilogram)
+            if(receiptOnlyItemsDict[key].some(item => /kg/.test(item))){
+                // Last elem is number?
+                if(convertToNumber(last_elem)){
+                    const item = new ReceiptItem(last_key, last_name, convertToNumber(last_elem), 1);
+                    items.push(item);
+                }
+                // Default item if no valid numbers are found
+                else{
+                    const item = new ReceiptItem(last_key, last_name, 0, 1);
+                    items.push(item);
+                }
+            }
+
             only_name_row = false; // Reset the flag after processing
         }
     }
@@ -380,13 +435,13 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
 
 /**
  * Creates a receipt item for multiple quantities of an item (Kaufland-specific logic).
- * @param {string} last_key - The key of the last item.
+ * @param {Number} last_key - The key of the last item.
  * @param {string} last_name - The name of the last item.
  * @param {Array} row - The row array representing the item data.
  * @returns {ReceiptItem} - The created receipt item.
  */
 function createItemMultipleKaufland(last_key, last_name, row) {
-    const cleanRow = row.filter(item => item !== ' '); // Remove empty spaces
+    const cleanRow = row.filter(item => item !== ' '); // Remove empty spaces from the row
     const last_index = cleanRow.length - 1;
 
     if (convertToNumber(cleanRow[last_index]) && convertToNumber(cleanRow[last_index - 1])) {
@@ -396,15 +451,15 @@ function createItemMultipleKaufland(last_key, last_name, row) {
 
         // Check if the amount is an integer and if it's contained in the first element of the row
         if (Number.isInteger(amount) && cleanRow[0].includes(amount.toString())) {
-            return new ReceiptItem(convertToNumber(last_key), last_name, single_price, amount);
+            return new ReceiptItem(last_key, last_name, single_price, amount);
         }
 
-        // If amount is not an integer or not contained in the first element, return item with amount 0
-        return new ReceiptItem(convertToNumber(last_key), last_name, single_price, 0);
+        // If amount is not an integer or not contained in the first element, return item with amount 1
+        return new ReceiptItem(last_key, last_name, single_price, 1);
     }
 
     // Default item if no valid numbers are found
-    return new ReceiptItem(convertToNumber(last_key), last_name, 0, 0);
+    return new ReceiptItem(last_key, last_name, 0, 1);
 }
 
 
@@ -705,39 +760,81 @@ function removeKgPriceRows(receiptDict) {
 }
 
 /**
- * Removes discount-related rows from the receipt (e.g., "Rabatt", "Extrapunkte").
- * Also removes the last row if it is an end row (e.g., "Summe").
+ * Removes discount-related rows from the receipt (e.g., "Rabatt").
  * @param {Object} receiptDict - Dictionary of receipt data.
  * @returns {Object} - The receipt dictionary with discount rows removed.
  */
 function removeDiscountRows(receiptDict) {
     const possible_discounts = getPossibleDiscounts();
 
-    // Loop through the receipt to find and remove discount rows
+    // Remove rows that contain any of the possible discount terms
+    const cleaned_dict = removeRowsMatchedWithValues(receiptDict, possible_discounts);
+
+    return cleaned_dict
+}
+
+
+/**
+ * Removes rows containing special info (e.g. additional info) from the receipt.
+ * @param {Object} receiptOnlyItemsDict - Dictionary of receipt data focusing only on item rows.
+ * @returns {Object} - A new dictionary with rows containing special info removed.
+ */
+function removeSpecialInfoRows(receiptDict){
+    const possible_special_info = getPossibleSpecialInfo();
+    
+    // Remove rows that contain any of the possible special info terms
+    const cleaned_dict = removeRowsMatchedWithValues(receiptDict, possible_special_info);
+
+    return cleaned_dict
+
+}
+
+
+/**
+ * Removes the row containing the a possible receipt end (e.g. "Summe") from the receipt, which usually is the last row.
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - A new dictionary with the row removed or unchanged dict if the end couldn'nt be located.
+ */
+function removeSummeRow(receiptDict) {
+    const index = getMaxDictKey(receiptDict); // Get the key with the highest value (last row)
+    if (index === 0) {
+        return receiptDict; // If no rows exist, return null
+    }
+
+    const last_row_arr = receiptDict[index]; // Get the last row based on the index
+    if (doesRowContainEnd(last_row_arr)) { // Check if the row contains the "Summe" keyword
+        delete receiptDict[index]; // Delete the row if it contains the end keyword
+    }
+
+    return receiptDict; // Return the updated dictionary without the "Summe" row
+}
+
+/**
+ * Removes rows from the receipt dictionary that match any values from a given list.
+ * This function is general and works by looping through the receipt data and removing 
+ * any rows containing specific unwanted values.
+ * 
+ * @param {Object} receiptDict - Dictionary of receipt data where each key is a row index, 
+ *                               and each value is an array representing the contents of the row.
+ * @param {Array} possibleValues - Array of strings representing the values to match and remove 
+ * @returns {Object} - A new dictionary with matched rows removed.
+ */
+function removeRowsMatchedWithValues(receiptDict, possibleValues) {
+    // Loop through the receipt rows
     for (let key in receiptDict) {
+        // Loop through the values in each row
         for (let i = 0; i < receiptDict[key].length; i++) {
-            for (let j = 0; j < possible_discounts.length; j++) {
-                if (receiptDict[key][i].includes(possible_discounts[j])) {
-                    delete receiptDict[key]; // Remove the entire key (row)
-                    break;
+            // Check if any of the possible values match the row's contents
+            for (let j = 0; j < possibleValues.length; j++) {
+                if (receiptDict[key][i].includes(possibleValues[j])) {
+                    delete receiptDict[key]; // Remove the entire row (key) if a match is found
+                    break; // Break out of the loop once a match is found
                 }
             }
             if (!receiptDict.hasOwnProperty(key)) break; // Exit loop if row was deleted
         }
     }
-
-    // Also remove the last row if it contains an end word (e.g., "Summe")
-    const index = getMaxDictKey(receiptDict);
-    if (index === 0) {
-        return null;
-    }
-
-    const last_row_arr = receiptDict[index];
-    if (doesRowContainEnd(last_row_arr)) {
-        delete receiptDict[index];
-    }
-
-    return receiptDict;
+    return receiptDict; // Return the updated dictionary with rows removed
 }
 
 /**
@@ -792,11 +889,32 @@ function getPossibleEnds() {
 
 /**
  * Returns a list of possible discount-related keywords (e.g., "Rabatt", "Extrapunkte").
- * These help identify rows in the receipt that indicate discounts or loyalty points.
+ * These help identify rows in the receipt that indicate discounts.
  * @returns {Array} - Array of possible discount keywords.
  */
 function getPossibleDiscounts() {
-    return ["Rabatt", "RABATT", "Zusatzpunkte", "Rebatt"];
+    return ["Rabatt", "RABATT", "Rebatt"];
+}
+
+/**
+ * Returns a list of possible special-info keywords (e.g., "Zusatzpunkte").
+ * These help identify rows in the receipt that loyalty points.
+ * @returns {Array} - Array of possible special info keywords.
+ */
+function getPossibleSpecialInfo() {
+    return ["Zusatzpunkte", "Willkommensrabatt", "sparen"];
+}
+
+
+/**
+ * Returns a list of possible store specific name prefixes (e.g., "KLC.", "G&G_").
+ * These help identify and remove store-specific parts from the item names.
+ * @returns {Array} - Array of possible store-specific name prefixes.
+ */
+function getPossibleStoreSpecificNamePrefixes(){
+    // Add store-specific name prefixes here
+    // Order of Items is **RELEVANT** because of the order of the replace function
+    return ["KLC.", "KLC ", "KLC", "G&G_", "G&G"];
 }
 
 /**
@@ -819,6 +937,21 @@ function convertToNumber(value) {
     let num = Number(normalizedValue);
 
     return !isNaN(num) ? parseFloat(num.toFixed(2)) : null; // Round to 2 decimal places if valid number
+}
+
+
+/**
+ * Replaces elements in a string from an array of possible values.
+ * @param {string} str - The string to replace the elements from.
+ * @param {Array} - Array of possible contents of the string to replace.	
+ * @returns {string} str- The edited string.
+ */
+function replaceFromLookupArray(str, array){
+    // Lopp through the array and replace each element
+    for (let i = 0; i < array.length; i++) {
+        str = str.replace(array[i], "");
+    }
+    return str;
 }
 
 /**

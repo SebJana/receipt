@@ -17,8 +17,8 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null); // Store the selected file (image or PDF)
   const [imageData, setImageData] = useState(null); // Store the Base64 string representation of the image/PDF preview
   const [imgElement, setImgElement] = useState(null); // Store the actual Image element for OCR extraction
-  const [store, setStore] = useState(null); // Store the user-selected or extracted store name
-  const [date, setDate] = useState(null); // Store the user-selected or extracted date
+  const [store, setStore] = useState(""); // Store the user-selected or extracted store name
+  const [date, setDate] = useState(""); // Store the user-selected or extracted date
   const [extractionError, setExtractionError] = useState(null); // Store the extraction error message
   const [receipt, setReceipt] = useState(null); // Store the processed receipt object
   const [receiptItems, setReceiptItems] = useState(null); // Store the extracted ReceiptItems
@@ -284,7 +284,7 @@ function App() {
             <div className="container-store-date">
                 <div className="container-store">
                   {/* Dropdown for selecting or confirming the store */}
-                  <select defaultValue={store} onChange={(e) => setStore(e.target.value)}>
+                  <select id ="select-store"defaultValue={store} onChange={(e) => setStore(e.target.value)}>
                     {possibleStores.map((storeOption, index) => (
                       <option key={index} value={storeOption}>{storeOption}</option>
                     ))}
@@ -292,7 +292,7 @@ function App() {
                 </div>
               <div className="container-date">
                 {/* Input field for confirming or editing the date */}
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <input id = "input-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
             </div>
             {/* Check icon to confirm store and date */}

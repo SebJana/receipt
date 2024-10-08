@@ -47,6 +47,10 @@ html, body {
   transform: scale(1.1);
   color: var(--icon-green);
 }
+.check-file-icon{
+  margin-top:30px;
+  margin-bottom:30px;
+}
 
 .trash-icon:hover {
   transform: scale(1.1);
@@ -90,15 +94,17 @@ html, body {
   align-items: center;
   width: var(--container-content-width);
   max-width: var(--container-content-max-width);
-  margin-top:20px;
-  margin-top:20px;
+  margin-top:30px;
+  margin-bottom:30px;
+
 }
 
 .container-store-date{
   display:flex;
-  flex-direction:row;
-  justify-content: space-between;
-  width:90%;
+ 
+  
+  width:80%;
+  
 }
 
 .container-store {
@@ -107,22 +113,48 @@ html, body {
   margin-right: 10px;
   width:40%;
   height:40px;
-  font-size:1.5em;
+  
 
 }
+.container-store select{
+  width: 100%;
+  font-size:16px;
+  text-align:center;
+  padding:5px;
+  border-radius:5px;
+}
+
+#select-store option{
+  background-color:white;
+  color:black;
+}
+#select-store option:checked{
+  background-color:lightgray;
+  color:black;
+}
+
+
+ 
 
 .container-date {
   display: flex;
   border:none;
-  width:60%;
+  width:50%;
   height:40px;
-  font-size:1.5em;
   max-width:200px;
 
 }
 
+.container-date input{
+  width:100%;
+  font-size:16px;
+  text-align:center;
+  padding:5px;
+  border-radius:5px;
+}
+
 .check-data-icon{
-  width:10%;
+  width:15%;
   height: auto;
   cursor: pointer;
   transition: transform 0.2s ease-in-out; 
