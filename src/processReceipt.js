@@ -68,9 +68,6 @@ export function processReceiptItems(receipt) {
             receiptItems = createReceiptItemsKaufland(receiptOnlyItemsDict);
             break;
         case "Lidl":
-            receiptOnlyItemsDict = removeKgPriceRows(receiptOnlyItemsDict);
-            receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
-            break;
         case "Edeka":
             receiptOnlyItemsDict = removeKgPriceRows(receiptOnlyItemsDict);
             receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
@@ -191,8 +188,8 @@ function addCategories(receiptItems) {
     let matching_value = '';
 
     // Loop through each item in the receipt
-    for (let i = 0; i < receiptItems.length; i++) {
-        let current_item_name = receiptItems[i].name;
+    for (const element of receiptItems) {
+        let current_item_name = element.name;
         
         // Replace store-specific name parts (e.g., "KLC", "G&G")
         const possible_prefixes = getPossibleStoreSpecificNamePrefixes();
@@ -202,11 +199,11 @@ function addCategories(receiptItems) {
         current_item_name = current_item_name.toLowerCase();
 
         // Loop through each category
-        for (let key in categories) {
+        for (const key in categories) {
             // Loop through each item in the category
-            for (let j = 0; j < categories[key].length; j++) {
+            for (const identifier of categories[key]) {
                 // Get the category item in lowercase
-                let category_item = categories[key][j].toLowerCase();
+                let category_item = identifier.toLowerCase();
 
                 // Perform fuzzy matching between the item name and category item
                 const new_distance = fuzzyMatch(current_item_name, category_item);
@@ -214,7 +211,7 @@ function addCategories(receiptItems) {
                 // Update matching category if a closer match (lower distance) is found
                 if (new_distance < distance) {
                     matching_key = key;
-                    matching_value = categories[key][j];
+                    matching_value = identifier;
                     distance = new_distance;
                 }
             }
@@ -243,7 +240,7 @@ function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
     let last_total_price = 0;
     let last_key = 0;
 
-    for (let key in receiptOnlyItemsDict) {
+    for (const key in receiptOnlyItemsDict) {
         if(receiptOnlyItemsDict[key].length < 2){
             //Can't extract an item here
             continue;
@@ -324,7 +321,7 @@ function createReceiptItemsNetto(receiptOnlyItemsDict) {
     let only_amount_row = false; // Flag for amount-only rows
     let last_single_price = 0;
 
-    for (let key in receiptOnlyItemsDict) {
+    for (const key in receiptOnlyItemsDict) {
         if (receiptOnlyItemsDict[key].length < 2) {
             // Can't extract an item here
             continue;
@@ -336,7 +333,7 @@ function createReceiptItemsNetto(receiptOnlyItemsDict) {
         const lastElemNumber = convertToNumber(last_elem);
 
         // Regular row: Handle single quantity items, can't have ONLY an amount identifier
-        if (!only_amount_row && lastElemNumber && !(/^[0-9]*[xX]$/.test(second_last_elem))) {
+        if (!only_amount_row && lastElemNumber && !(/^\d*[xX]$/.test(second_last_elem))) {
             const single_price = lastElemNumber;
             const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);
 
@@ -361,7 +358,7 @@ function createReceiptItemsNetto(receiptOnlyItemsDict) {
         }
 
         // Multiple Items: Handle items with multiple quantities (e.g., 3x, X, 3X)
-        if (lastElemNumber && (/^[0-9]*[xX]$/.test(second_last_elem)) && second_last_elem.length <=3) {
+        if (lastElemNumber && (/^\d*[xX]$/.test(second_last_elem)) && second_last_elem.length <=3) {
             last_single_price = lastElemNumber;  // Set the price for one unit
             only_amount_row = true;
         }
@@ -382,7 +379,7 @@ function createReceiptItemsKaufland(receiptOnlyItemsDict) {
     let last_name = '';
     let last_key = '';
 
-    for (let key in receiptOnlyItemsDict) {
+    for (const key in receiptOnlyItemsDict) {
         const last_index = receiptOnlyItemsDict[key].length - 1;
         const last_elem = receiptOnlyItemsDict[key][last_index];
 
@@ -473,11 +470,11 @@ function extractDiscountRows(receiptDict) {
     const discount_rows = {};
 
     // Loop through the receipt to find and remove discount rows
-    for (let key in receiptDict) {
+    for (const key in receiptDict) {
         const last_index = receiptDict[key].length -1;
-        for (let i = 0; i < receiptDict[key].length; i++) {
-            for (let j = 0; j < possible_discounts.length; j++) {
-                if (receiptDict[key][i].includes(possible_discounts[j])) {
+        for (const element of receiptDict[key]) {
+            for (const discount of possible_discounts) {
+                if (element.includes(discount)) {
                     discount_rows[key] = receiptDict[key][last_index]; // Add the correct amount of the discount row
                     break; // Break out of the `j` loop
                 }
@@ -499,17 +496,17 @@ function extractDiscountRows(receiptDict) {
  * @returns {Array} - ReceiptItems with discounts applied.
  */
 function applyDiscounts(receiptItems, receiptDiscount) {
-    for (let key in receiptDiscount) {
+    for (const key in receiptDiscount) {
         const discountValue = convertToNumber(receiptDiscount[key]); // Get the discount amount
-        const discountIndex = parseInt(key, 10); // Parse the key as an index
+        const discountIndex = convertToNumber(key); // Parse the key as an index
 
         let possible_item = null;
 
-        // Loop through the receipt items to find the item with the highest index less than the discount index
-        for (let i = 0; i < receiptItems.length; i++) {
-            if (receiptItems[i].index < discountIndex) {
-                if (!possible_item || receiptItems[i].index > possible_item.index) {
-                    possible_item = receiptItems[i];
+        // Loop through the receipt items to find the item with the highest index that is less than the discount index
+        for (const element of receiptItems) {
+            if (element.index < discountIndex) {
+                if (!possible_item || element.index > possible_item.index) {
+                    possible_item = element;
                 }
             }
         }
@@ -530,20 +527,49 @@ function applyDiscounts(receiptItems, receiptDiscount) {
  * @returns {Object} - Cleaned receipt dictionary.
  */
 function cleanRows(receiptDict) {
+    receiptDict = removeEmptyElements(receiptDict);
+    receiptDict = removeUnnecessaryElementsFromEnd(receiptDict);
+    receiptDict = cleanOcrErrorPatterns(receiptDict);
+    
+    return receiptDict;
+}
+
+
+/**
+ * Removes ' ' and '' from the start and end of each row in the receipt dictionary.
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - Cleaned receipt dictionary with empty elements removed.
+ */
+function removeEmptyElements(receiptDict) {
     // Remove ' ' and '' from the start of each row
-    for (let key in receiptDict) {
-        for (let i = 0; i < receiptDict[key].length; i++) {
-            if (!(receiptDict[key][i] === ' ' || receiptDict[key][i] === '')) break;
-            receiptDict[key].splice(i, 1);
-            i--; // Adjust index after removal
+    for (const key in receiptDict) {
+        while (receiptDict[key].length > 0 && (receiptDict[key][0] === ' ' || receiptDict[key][0] === '')) {
+            receiptDict[key].splice(0, 1); // Always remove the first element if it's empty
         }
     }
 
-    // Remove elements from the end of the row if they have less than 3 digits, 'A', or 'B' or 'D'
-    for (let key in receiptDict) {
+    // Remove ' ' and '' from the end of each row
+    for (const key in receiptDict) {
+        while (receiptDict[key].length > 0 && (receiptDict[key][receiptDict[key].length - 1] === ' ' || receiptDict[key][receiptDict[key].length - 1] === '')) {
+            receiptDict[key].splice(receiptDict[key].length - 1, 1); // Always remove the last element if it's empty
+        }
+    }
+
+    return receiptDict;
+}
+
+
+/**
+ * Removes elements from the end of the row if they have less than 3 characters or match specific values (e.g., 'A', 'B', 'D').
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - Cleaned receipt dictionary with unnecessary elements removed.
+ */
+function removeUnnecessaryElementsFromEnd(receiptDict) {
+    for (const key in receiptDict) {
         for (let i = receiptDict[key].length - 1; i >= 0; i--) {
             const current_element = receiptDict[key][i];
             if (receiptDict[key].length === 1) continue; // Skip single-element rows
+            // Redundant check for the letters A, B, D as they are < 3 characters, but most common for tax rates at the end of receipt rows
             if (current_element === 'A' || current_element === 'B' || current_element === 'D' || current_element.length < 3) {
                 receiptDict[key].splice(i, 1);
             } else {
@@ -552,16 +578,17 @@ function cleanRows(receiptDict) {
         }
     }
 
-    // Remove ' ' and '' from the end of each row
-    for (let key in receiptDict) {
-        for (let i = receiptDict[key].length - 1; i >= 0; i--) {
-            if (!(receiptDict[key][i] === ' ' || receiptDict[key][i] === '')) break;
-            receiptDict[key].splice(i, 1);
-            i++; // Adjust index after removal
-        }
-    }
+    return receiptDict;
+}
 
-    for (let key in receiptDict) {
+
+/**
+ * Cleans OCR reading errors by replacing patterns like '*A', '+*A', '5A' in the receipt data.
+ * @param {Object} receiptDict - Dictionary of receipt data.
+ * @returns {Object} - Cleaned receipt dictionary with OCR patterns corrected.
+ */
+function cleanOcrErrorPatterns(receiptDict) {
+    for (const key in receiptDict) {
         // Get the last element
         let lastElement = String(receiptDict[key][receiptDict[key].length - 1]);
     
@@ -594,14 +621,14 @@ function extractStore(receiptDict) {
     const possible_stores = getPossibleStores();
 
     // Loop through all rows of the receipt
-    for (let key in receiptDict) {
+    for (const key in receiptDict) {
         // Loop through every word in the row
-        for (let i = 0; i < receiptDict[key].length; i++) {
+        for (const element of receiptDict[key]) {
             // Loop through every possible store
-            for (let store in possible_stores) {
+            for (const store in possible_stores) {
                 // Loop through every possible store identifier
-                for (let j = 0; j < possible_stores[store].length; j++) {
-                    if (receiptDict[key][i].includes(possible_stores[store][j])) {
+                for (const identifier of possible_stores[store]) {
+                    if (element.includes(identifier)) {
                         return store; // Return store if found
                     }
                 }
@@ -623,11 +650,11 @@ function extractDate(receiptDict) {
     // Date pattern: DD.MM.YY or DD.MM.YYYY
     const datePattern = /\b(\d{2})[.\-/](\d{2})[.\-/](\d{2}|\d{4})\b/;
 
-    for (let key in receiptDict) {
+    for (const key in receiptDict) {
         // Loop through every word in the row
-        for (let i = 0; i < receiptDict[key].length; i++) {
+        for (const element of receiptDict[key]) {
             // Check if datePattern appears somewhere in the string
-            const date_text = receiptDict[key][i].match(datePattern);
+            const date_text = element.match(datePattern);
             if (date_text) {
                 // Extract the day, month, and year from the regex match
                 const day = date_text[1];
@@ -665,15 +692,16 @@ function cutReceipt(receiptDict) {
     const possible_ends = getPossibleEnds(); // End points for relevant data
 
     // Helper function to find the start or end index
-    function getEditIndex(dictToSearch) {
-        for (let key in receiptDict) {
-            for (let i = 0; i < receiptDict[key].length; i++) {
-                if (!/^[a-zA-Z]+$/.test(receiptDict[key][i])) {
+    function getEditIndex(arrToSearch) {
+        for (const key in receiptDict) {
+            for (const element of receiptDict[key]) {
+                if (!/^[a-zA-Z]+$/.test(element)) {
                     continue; // Skip if the element is not only letters
+                              // Cant be a start if it includes numbers (especially relevant for Kaufland App receipt pdf exports)
                 }
-                for (let j = 0; j < dictToSearch.length; j++) {
-                    if (receiptDict[key][i].includes(dictToSearch[j])) {
-                        return key; // Return the first occurrence
+                for (const item of arrToSearch) {
+                    if (element.includes(item)) {
+                        return Number(key); // Return the first occurrence
                     }
                 }
             }
@@ -705,6 +733,7 @@ function cutReceipt(receiptDict) {
     return tempDict;
 }
 
+
 /**
  * Extracts the sum (total amount) from the receipt.
  * Typically found at the bottom of the receipt.
@@ -733,6 +762,7 @@ function extractSum(receiptDict) {
     return null; // Default to null if no sum can be determined
 }
 
+
 /**
  * Removes rows containing price per kilogram (e.g., "/kg").
  * These rows typically represent unit prices and not total prices.
@@ -743,17 +773,17 @@ function removeKgPriceRows(receiptDict) {
     const remove_keys = [];
 
     // Find rows that contain "/kg"
-    for (let key in receiptDict) {
-        for (let i = 0; i < receiptDict[key].length; i++) {
-            if (receiptDict[key][i].includes("/kg")) {
+    for (const key in receiptDict) {
+        for (const element of receiptDict[key]) {
+            if (element.includes("/kg")) {
                 remove_keys.push(key);
             }
         }
     }
 
     // Remove rows that were marked for deletion
-    for (let i = 0; i < remove_keys.length; i++) {
-        delete receiptDict[remove_keys[i]];
+    for (const element of remove_keys) {
+        delete receiptDict[element];
     }
 
     return receiptDict;
@@ -781,7 +811,6 @@ function removeDiscountRows(receiptDict) {
  */
 function removeSpecialInfoRows(receiptDict){
     const possible_special_info = getPossibleSpecialInfo();
-    
     // Remove rows that contain any of the possible special info terms
     const cleaned_dict = removeRowsMatchedWithValues(receiptDict, possible_special_info);
 
@@ -798,7 +827,7 @@ function removeSpecialInfoRows(receiptDict){
 function removeSummeRow(receiptDict) {
     const index = getMaxDictKey(receiptDict); // Get the key with the highest value (last row)
     if (index === 0) {
-        return receiptDict; // If no rows exist, return null
+        return null; // If no rows exist, return null --> there is no receipt to process, redundant check, because error is already thrown in the main function if the receiptDict is empty or null
     }
 
     const last_row_arr = receiptDict[index]; // Get the last row based on the index
@@ -821,12 +850,12 @@ function removeSummeRow(receiptDict) {
  */
 function removeRowsMatchedWithValues(receiptDict, possibleValues) {
     // Loop through the receipt rows
-    for (let key in receiptDict) {
+    for (const key in receiptDict) {
         // Loop through the values in each row
-        for (let i = 0; i < receiptDict[key].length; i++) {
+        for (const element of receiptDict[key]) {
             // Check if any of the possible values match the row's contents
-            for (let j = 0; j < possibleValues.length; j++) {
-                if (receiptDict[key][i].includes(possibleValues[j])) {
+            for (const value of possibleValues) {
+                if (element.includes(value)) {
                     delete receiptDict[key]; // Remove the entire row (key) if a match is found
                     break; // Break out of the loop once a match is found
                 }
@@ -862,7 +891,7 @@ export function getPossibleStoreKeys() {
     const possible_store_keys = [];
 
     // Loop through the possible stores object and extract each store key
-    for (let key in possible_stores) {
+    for (const key in possible_stores) {
         possible_store_keys.push(key); // Add each store key (name) to the array
     }
 
@@ -902,7 +931,7 @@ function getPossibleDiscounts() {
  * @returns {Array} - Array of possible special info keywords.
  */
 function getPossibleSpecialInfo() {
-    return ["Zusatzpunkte", "Willkommensrabatt", "sparen"];
+    return ["Zusatzpunkte", "Willkommensrabatt", "sparen", "Posten:"];
 }
 
 
@@ -948,8 +977,8 @@ function convertToNumber(value) {
  */
 function replaceFromLookupArray(str, array){
     // Lopp through the array and replace each element
-    for (let i = 0; i < array.length; i++) {
-        str = str.replace(array[i], "");
+    for (const item of array) {
+        str = str.replace(item, "");
     }
     return str;
 }
@@ -962,8 +991,8 @@ function replaceFromLookupArray(str, array){
  */
 function doesRowContainEnd(row) {
     const possible_ends = getPossibleEnds();
-    for (let end of possible_ends) {
-        for (let str of row) {
+    for (const end of possible_ends) {
+        for (const str of row) {
             if (str.includes(end)) {
                 return true;
             }
@@ -975,18 +1004,24 @@ function doesRowContainEnd(row) {
 /**
  * Gets the highest numeric key in the dictionary, assuming the keys are numbers.
  * @param {Object} dict - The dictionary from which to find the highest key.
- * @returns {number} - The highest numeric key, or 0 if no keys are found.
+ * @returns {number} - The highest numeric key, or 0 if no keys are found or if no valid numeric keys exist.
  */
 function getMaxDictKey(dict) {
-    if (!dict || Object.keys(dict).length === 0) {
+    if (!dict || getDictLength(dict) === 0) {
         return 0;
     }
 
-    let maxKey = Object.keys(dict)
-        .map(key => Number(key)) // Convert keys to numbers
-        .reduce((a, b) => a > b ? a : b); // Find the largest key
+    const numericKeys = Object.keys(dict)
+        .map(key => Number(key))
+        .filter(key => !isNaN(key)); // Filter out NaN values
 
-    return maxKey;
+    // If there are no valid numeric keys, return 0
+    if (numericKeys.length === 0) {
+        return 0;
+    }
+
+    // Find the largest numeric key
+    return numericKeys.reduce((a, b) => Math.max(a, b), -Infinity);
 }
 
 /**
@@ -1000,10 +1035,10 @@ function concatenatItemNameString(row, elems_to_leave_out) {
     if (row.length === 1) return row[0];
 
     let name_str = '';
-    // Delete all whitespaces from name so that both pdf and img is equal
+    // Delete all whitespaces from name so that both pdf and img input is equal
     const cleanRow = row.filter(item => item !== ' ');
 
-    // Declare loop stop as length - elements set to leave at the row end
+    // Declare loop stop as (length - elements) set to leave at the row end
     let last_index = cleanRow.length;
     last_index = last_index - elems_to_leave_out;
 

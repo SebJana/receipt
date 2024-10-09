@@ -55,7 +55,8 @@ function App() {
       await handlePDFPreview(file); // Wait for PDF preview
     } else {
       // Redundant check, but fail safe this way
-      alert('Unsupported file type.'); // Show an error if the file type is unsupported
+      console.log('Unsupported file type.'); // Show an error if the file type is unsupported
+      resetFile(); // Reset the file input and related states --> dont let the user continue with the wrong file
     }
   };
 
@@ -152,7 +153,8 @@ function App() {
    */
   const runReceiptItems = (receipt) => {
     try {
-      setReceiptItems(processReceiptItems(receipt)); // Process the receipt items (store-specific logic)
+      const items = processReceiptItems(receipt); // Process the receipt items (store-specific logic)
+      setReceiptItems(items); // Store the processed receipt item
     }
     catch (err) {
       setExtractionError(err.message); // Store the error message for display
@@ -219,6 +221,7 @@ function App() {
     runExtractionFromFile(); // Start the extraction process
   };
 
+  // TODO: Split the App component into smaller components/files for better readability and maintainability
   return (
     
     <div className="App">
@@ -285,8 +288,8 @@ function App() {
                 <div className="container-store">
                   {/* Dropdown for selecting or confirming the store */}
                   <select id ="select-store"defaultValue={store} onChange={(e) => setStore(e.target.value)}>
-                    {possibleStores.map((storeOption, index) => (
-                      <option key={index} value={storeOption}>{storeOption}</option>
+                    {possibleStores.map((storeOption) => (
+                      <option key={storeOption} value={storeOption}>{storeOption}</option>
                     ))}
                   </select>
                 </div>

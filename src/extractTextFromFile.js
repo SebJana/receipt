@@ -35,8 +35,7 @@ export async function extractFromPDF(file) {
         let key_index = 0; // Key index for each row
 
         // Loop through each text item on the page
-        for (let i = 0; i < textContent.items.length; i++) {
-          const item = textContent.items[i];
+        for (const item of textContent.items) {
           const current_transform_height = item.transform[5]; // Height (y-position) of the current item
 
           // If the height changes, create a new row
@@ -52,7 +51,7 @@ export async function extractFromPDF(file) {
 
         resolve(receiptRows); // Resolve with the receipt rows
       } catch (error) {
-        reject(error); // Reject the promise if an error occurs
+        reject(new Error(error)); // Reject the promise if an error occurs
       }
     };
 
@@ -82,7 +81,7 @@ export function extractFromImage(img, language = 'deu') {
         resolve(receiptDict); // Resolve the dictionary of receipt rows
       })
       .catch((err) => {
-        reject(err); // Reject the promise if an error occurs
+        reject(new Error(err)); // Reject the promise if an error occurs
       });
   });
 }
@@ -108,7 +107,7 @@ function preprocessImage(img) {
   replaceColorRange(canvas, ctx, "#70c0e5", 30);
 
   // Step 1: Apply Gaussian Blur to reduce noise
-  applyGaussianBlur(ctx, canvas.width, canvas.height, 1);
+  applyGaussianBlur(ctx, 1);
 
   // Step 2: Convert the image to greyscale
   convertToGrayscale(canvas, ctx);
@@ -190,12 +189,10 @@ function enhanceContrast(canvas, ctx, lowPercentile = 1, highPercentile = 99, co
 
 /**
  * Applies a Gaussian blur to the image to reduce noise.
- * @param {CanvasRenderingContext2D} ctx - The canvas context.
- * @param {number} width - The width of the canvas.
- * @param {number} height - The height of the canvas.
+ * @param {CanvasRenderingContext2D} ctx - The canvas context.nvas.
  * @param {number} radius - The radius of the blur (default is 1.0).
  */
-function applyGaussianBlur(ctx, width, height, radius = 1.0) {
+function applyGaussianBlur(ctx, radius = 1.0) {
   ctx.filter = `blur(${radius}px)`; // Apply blur filter with the specified radius
   ctx.drawImage(ctx.canvas, 0, 0);  // Redraw the image with blur applied
 }

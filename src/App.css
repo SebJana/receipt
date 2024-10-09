@@ -35,7 +35,6 @@ html, body {
   border:none;
 }
 
-
 .camera-icon, .trash-icon, .file-icon, .check-file-icon {
   width: 75px;
   height: auto;
@@ -101,10 +100,7 @@ html, body {
 
 .container-store-date{
   display:flex;
- 
-  
   width:80%;
-  
 }
 
 .container-store {
@@ -113,9 +109,8 @@ html, body {
   margin-right: 10px;
   width:40%;
   height:40px;
-  
-
 }
+
 .container-store select{
   width: 100%;
   font-size:16px;
@@ -128,13 +123,11 @@ html, body {
   background-color:white;
   color:black;
 }
+
 #select-store option:checked{
   background-color:lightgray;
   color:black;
 }
-
-
- 
 
 .container-date {
   display: flex;
@@ -142,7 +135,6 @@ html, body {
   width:50%;
   height:40px;
   max-width:200px;
-
 }
 
 .container-date input{
