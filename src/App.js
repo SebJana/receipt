@@ -2,8 +2,11 @@ import React, { useState, useRef } from 'react';
 import './App.css';
 import { Camera, Trash2, FileText, Check, LoaderCircle, ImageOff } from 'lucide-react';
 
-import { extractFromImage, extractFromPDF } from './extractTextFromFile';
-import { processReceiptDict, processReceiptItems, getPossibleStoreKeys } from './processReceipt';
+import { extractFromImage } from './fileTextExtraction/imageExtraction.js';
+import { extractFromPDF } from './fileTextExtraction/pdfExtraction.js';
+
+import { processReceiptDict, processReceiptItems } from './receiptProcessing/processReceipt.js';
+import { getPossibleStoreKeys } from './receiptProcessing/utilities.js';
 
 import * as pdfjsLib from 'pdfjs-dist';
 // Copied pdf.worker.mjs to public for direct access
