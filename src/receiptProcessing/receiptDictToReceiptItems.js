@@ -1,7 +1,7 @@
 import { ReceiptItem } from "./receiptModel.js";
 import { convertToNumber, concatenatItemNameString } from "./utilities.js";
 
-//TODO refactoring the entire creation of receipt items, to make it more readable and maintainable
+//TODO refactoring the entire creation of receipt items, to make it more readable and maintainable TODO
 
 /**
  * Creates receipt items from the processed Lidl/Edeka receipt dictionary.
@@ -39,24 +39,34 @@ export function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
                 pfandrückgabe_row = false;
                 continue;
             }
-            // Regular multiple items row
+            // Regular multiple items row?
             if(convertToNumber(second_last_elem)){
-                const amount = convertToNumber(second_last_elem);
-                const single_price = Number((total_price/amount).toFixed(2));
-                // Determine the amount of elements to leave out for the name
-                let elems_to_leave_out = 0;
                 const third_last_elem = receiptOnlyItemsDict[key][last_index-2];
-                if(third_last_elem === "x" || third_last_elem === "X"){
-                    elems_to_leave_out = 4;
-                }
-                else{
-                    elems_to_leave_out = 3;
-                }
-                const name = concatenatItemNameString(receiptOnlyItemsDict[key], elems_to_leave_out);
+                // Check if the row contains an 'x' or 'X' --> multiple items
+                if(third_last_elem.includes("x") || third_last_elem.includes("X")){
+                    const amount = convertToNumber(second_last_elem);
+                    const single_price = Number((total_price/amount).toFixed(2));
+                    // Determine the amount of elements to leave out for the name
+                    let elems_to_leave_out = 0;
+                    if(third_last_elem === "x" || third_last_elem === "X"){
+                        elems_to_leave_out = 4;
+                    }
+                    else{
+                        elems_to_leave_out = 3;
+                    }
+                    const name = concatenatItemNameString(receiptOnlyItemsDict[key], elems_to_leave_out);
 
-                const item = new ReceiptItem(convertToNumber(key),name,single_price,amount);
-                items.push(item);
-                continue;
+                    const item = new ReceiptItem(convertToNumber(key),name,single_price,amount);
+                    items.push(item);
+                    continue;
+                }
+                // Single item that had a number as second last element, but that number is not an amount indicator but a part of the name
+                else{
+                    const name = concatenatItemNameString(receiptOnlyItemsDict[key], 1);
+                    const item = new ReceiptItem(convertToNumber(key),name,total_price,1);
+                    items.push(item);
+                    continue;
+                }
             }
             // Check if Pfandrückgabe (Lidl-specific logic)
             if(convertToNumber(last_elem) < 0 && second_last_elem.includes("Pfand")){

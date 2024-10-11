@@ -3,7 +3,7 @@ import { cleanRows } from "./receiptDataCleaning.js";
 import { extractStore, extractDate, extractSum, extractDiscountRows } from "./receiptDataExtraction.js";
 import { cutReceipt, removeKgPriceRows, removeDiscountRows, removeSpecialInfoRows, removeSummeRow, applyDiscounts} from "./receiptDataManipulation.js";	
 import { createReceiptItemsKaufland, createReceiptItemsLidlEdeka, createReceiptItemsNetto } from "./receiptDictToReceiptItems.js";
-import { addCategories, addCategoriesWithBrainJS } from "../categoryMatching/fuzzyMatching.js";
+import { addCategories } from "../categoryMatching/matchCategories.js";
 
 import { getDictLength } from "./utilities.js";
 
@@ -100,10 +100,10 @@ export function processReceiptItems(receipt) {
     receiptItems = applyDiscounts(receiptItems, receiptDiscount);
     console.log(receiptItems); 
 
-    //addCategories(receiptItems);
-    addCategoriesWithBrainJS(receiptItems);
+    addCategories(receiptItems);
 
     // generateExcelFile(receiptItems, receipt.getId());
+    
 
     // TODO
     // Reading in the receipt example files and testing them automatically, also using that for the creation of the categories

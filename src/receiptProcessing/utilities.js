@@ -34,7 +34,7 @@ export function removeRowsMatchedWithValues(receiptDict, possibleValues) {
 export function getPossibleStores() {
     return {
         "Kaufland": ["Kaufland", "KAUFLAND", "KLC", "Bergsteig", "09621/78260"],
-        "Lidl": ["Lidl", "LIDL", "Barbarastr", "Hirschauer", "L4DL", "L$DE", "Lid)", "Li1dl"],
+        "Lidl": ["Lidl", "LIDL", "Barbarastr", "Hirschauer", "L4DL", "L$DE", "Lid)", "Li1dl", "Lıdl"],
         "Netto": ["Netto", "NETTO", "Mosacher", "Deutschlandcard", "Marken-Discount"],
         "Edeka": ["Edeka", "EDEKA", "Wiesmeth", "Pfistermeisterstr", "G&G", "Kuhnert"],
         "Aldi": ["Aldi", "ALDI"],
@@ -83,7 +83,7 @@ export function getPossibleEnds() {
  * @returns {Array} - Array of possible discount keywords.
  */
 export function getPossibleDiscounts() {
-    return ["Rabatt", "RABATT", "Rebatt"];
+    return ["Rabatt", "RABATT", "Rebatt", "Wıllkommensrabatt", "Willkommensrabatt"];
 }
 
 /**
@@ -92,7 +92,7 @@ export function getPossibleDiscounts() {
  * @returns {Array} - Array of possible special info keywords.
  */
 export function getPossibleSpecialInfo() {
-    return ["Zusatzpunkte", "Willkommensrabatt", "sparen", "Posten:"];
+    return ["Zusatzpunkte", "sparen", "Posten:"];
 }
 
 
