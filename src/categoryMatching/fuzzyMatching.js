@@ -1,6 +1,8 @@
 import { getCategories } from './categories.js';
 import { getPossibleStoreSpecificNamePrefixes, replaceFromLookupArray } from '../receiptProcessing/utilities.js';
 
+const brain = require('brain.js'); // Import the Brain.js library
+
 /**
  * Categorizes receipt items by matching them to predefined categories using fuzzy matching.
  * @param {Array} receiptItems - List of receipt items, each with a `name` property.
@@ -100,3 +102,99 @@ function levenshteinDistance(str1, str2) {
     // The Levenshtein distance is the value in the bottom-right corner of the matrix
     return matrix[len1][len2];
   }
+
+/**
+ * Converts a string to a vector of normalized ASCII values, padding or trimming to the max length.
+ * @param {string} str - The input string to convert.
+ * @param {number} length - The fixed length for the output vector.
+ * @returns {Array} - A vector of the given fixed length.
+ */
+function stringToVector(str, maxLength) {
+  const vector = str.split('').map(char => char.charCodeAt(0) / 255);
+
+  // If the vector is shorter than the max length, pad it with zeros
+  if (vector.length < maxLength) {
+    while (vector.length < maxLength) {
+      vector.push(0);
+    }
+  }
+
+  return vector;
+}
+
+
+/**
+ * Categorizes receipt items by using a neural network (Brain.js).
+ * @param {Array} receiptItems - List of receipt items, each with a `name` property.
+ * @returns {void}
+ */
+export function addCategoriesWithBrainJS(receiptItems) {
+  // Retrieve pre-defined categories
+  const categories = getCategories();
+  const possiblePrefixes = getPossibleStoreSpecificNamePrefixes();
+
+  // Find the maximum length of all items in the categories
+  let maxInputLength = 0;
+  for (const items of Object.values(categories)) {
+    for (const item of items) {
+      maxInputLength = Math.max(maxInputLength, item.length);
+    }
+  }
+
+  // Initialize the neural network
+  const net = new brain.NeuralNetwork();
+
+  // Prepare the training data for the neural network
+  const trainingData = [];
+  for (const [category, items] of Object.entries(categories)) {
+      items.forEach(item => {
+          // Convert item name to a padded vector with dynamic max length
+          const inputVector = stringToVector(item.toLowerCase(), maxInputLength);
+          trainingData.push({
+              input: inputVector,       // Encoded item name with max length
+              output: { [category]: 1 } // Category as the output
+          });
+      });
+  }
+
+  // Train the neural network with the prepared data
+  net.train(trainingData, {
+      iterations: 20000, // Number of training iterations
+      log: true,         // Log each iteration (optional)
+      logPeriod: 100,    // Logging frequency (optional)
+      learningRate: 0.5  // Learning rate for training
+  });
+
+  // Loop through each item in the receipt and categorize it
+  for (const element of receiptItems) {
+      let currentItemName = element.name;
+
+      // Replace store-specific name parts (e.g., "KLC", "G&G") for better matching
+      currentItemName = replaceFromLookupArray(currentItemName, possiblePrefixes);
+      
+      // Convert the item name to lowercase for consistent matching
+      currentItemName = currentItemName.toLowerCase();
+
+      // Convert the current item name to a padded vector with dynamic max length
+      const inputVector = stringToVector(currentItemName, maxInputLength);
+
+      // Predict the category using the trained neural network
+      const prediction = net.run(inputVector);
+      
+      // Find the category with the highest confidence
+      let bestMatchingCategory = '';
+      let maxConfidence = 0;
+      for (const [category, confidence] of Object.entries(prediction)) {
+          if (confidence > maxConfidence) {
+              bestMatchingCategory = category;
+              maxConfidence = confidence;
+          }
+      }
+
+      // Assign the best matching category to the current item
+      element.category = bestMatchingCategory;
+
+      // Log the current item and predicted category
+      console.log(currentItemName, bestMatchingCategory, maxConfidence);
+  }
+}

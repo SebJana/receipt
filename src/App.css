@@ -47,7 +47,6 @@ html, body {
   color: var(--icon-green);
 }
 .check-file-icon{
-  margin-top:30px;
   margin-bottom:30px;
 }
 
@@ -62,6 +61,7 @@ html, body {
   max-width: var(--container-content-max-width);
   box-shadow: 0 0 20px rgba(0, 0, 0, 1);
   height:auto;
+  margin-bottom: 30px;
 }
 
 .preview_image img{
@@ -93,9 +93,6 @@ html, body {
   align-items: center;
   width: var(--container-content-width);
   max-width: var(--container-content-max-width);
-  margin-top:30px;
-  margin-bottom:30px;
-
 }
 
 .container-store-date{

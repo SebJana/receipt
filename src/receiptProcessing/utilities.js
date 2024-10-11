@@ -9,21 +9,22 @@
  * @returns {Object} - A new dictionary with matched rows removed.
  */
 export function removeRowsMatchedWithValues(receiptDict, possibleValues) {
+    let tempDict = { ...receiptDict };
     // Loop through the receipt rows
-    for (const key in receiptDict) {
+    for (const key in tempDict) {
         // Loop through the values in each row
-        for (const element of receiptDict[key]) {
+        for (const element of tempDict[key]) {
             // Check if any of the possible values match the row's contents
             for (const value of possibleValues) {
                 if (element.includes(value)) {
-                    delete receiptDict[key]; // Remove the entire row (key) if a match is found
+                    delete tempDict[key]; // Remove the entire row (key) if a match is found
                     break; // Break out of the loop once a match is found
                 }
             }
-            if (!receiptDict.hasOwnProperty(key)) break; // Exit loop if row was deleted
+            if (!tempDict.hasOwnProperty(key)) break; // Exit loop if row was deleted
         }
     }
-    return receiptDict; // Return the updated dictionary with rows removed
+    return tempDict; // Return the updated dictionary with rows removed
 }
 
 /**
@@ -73,7 +74,7 @@ export function getPossibleStarts() {
  * @returns {Array} - Array of possible receipt end strings.
  */
 export function getPossibleEnds() {
-    return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen", "SUNNE"];
+    return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen", "zahlen.", "SUNNE"];
 }
 
 /**

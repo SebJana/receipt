@@ -40,13 +40,15 @@ export function cutReceipt(receiptDict) {
     const possible_starts = getPossibleStarts(); // Start points for relevant data
     const possible_ends = getPossibleEnds(); // End points for relevant data
 
+    let tempDict = { ...receiptDict };
+
     // Helper function to find the start or end index
     function getEditIndex(arrToSearch) {
-        for (const key in receiptDict) {
-            for (const element of receiptDict[key]) {
+        for (const key in tempDict) {
+            for (const element of tempDict[key]) {
                 if (!/^[a-zA-Z]+$/.test(element)) {
                     continue; // Skip if the element is not only letters
-                              // Cant be a start if it includes numbers (especially relevant for Kaufland App receipt pdf exports)
+                              // Can't be a start if it includes numbers (especially relevant for Kaufland App receipt pdf exports)
                 }
                 for (const item of arrToSearch) {
                     if (element.includes(item)) {
@@ -61,7 +63,6 @@ export function cutReceipt(receiptDict) {
 
     const start_index = getEditIndex(possible_starts); // Get starting index
     let end_index = getEditIndex(possible_ends); // Get ending index
-    let tempDict = receiptDict;
 
     // If an end index is found, remove rows after the relevant content
     if (end_index !== -1) {
@@ -90,10 +91,11 @@ export function cutReceipt(receiptDict) {
  */
 export function removeKgPriceRows(receiptDict) {
     const remove_keys = [];
+    let tempDict = { ...receiptDict };
 
     // Find rows that contain "/kg"
-    for (const key in receiptDict) {
-        for (const element of receiptDict[key]) {
+    for (const key in tempDict) {
+        for (const element of tempDict[key]) {
             if (element.includes("/kg")) {
                 remove_keys.push(key);
             }
@@ -102,10 +104,10 @@ export function removeKgPriceRows(receiptDict) {
 
     // Remove rows that were marked for deletion
     for (const element of remove_keys) {
-        delete receiptDict[element];
+        delete tempDict[element];
     }
 
-    return receiptDict;
+    return tempDict;
 }
 
 /**
@@ -115,9 +117,10 @@ export function removeKgPriceRows(receiptDict) {
  */
 export function removeDiscountRows(receiptDict) {
     const possible_discounts = getPossibleDiscounts();
+    let tempDict = { ...receiptDict };
 
     // Remove rows that contain any of the possible discount terms
-    const cleaned_dict = removeRowsMatchedWithValues(receiptDict, possible_discounts);
+    const cleaned_dict = removeRowsMatchedWithValues(tempDict, possible_discounts);
 
     return cleaned_dict
 }
@@ -130,8 +133,10 @@ export function removeDiscountRows(receiptDict) {
  */
 export function removeSpecialInfoRows(receiptDict){
     const possible_special_info = getPossibleSpecialInfo();
+    let tempDict = { ...receiptDict };
+
     // Remove rows that contain any of the possible special info terms
-    const cleaned_dict = removeRowsMatchedWithValues(receiptDict, possible_special_info);
+    const cleaned_dict = removeRowsMatchedWithValues(tempDict, possible_special_info);
 
     return cleaned_dict
 
@@ -144,15 +149,16 @@ export function removeSpecialInfoRows(receiptDict){
  * @returns {Object} - A new dictionary with the row removed or unchanged dict if the end couldn'nt be located.
  */
 export function removeSummeRow(receiptDict) {
-    const index = getMaxDictKey(receiptDict); // Get the key with the highest value (last row)
+    let tempDict = { ...receiptDict };
+    const index = getMaxDictKey(tempDict); // Get the key with the highest value (last row)
     if (index === 0) {
         return null; // If no rows exist, return null --> there is no receipt to process, redundant check, because error is already thrown in the main function if the receiptDict is empty or null
     }
 
-    const last_row_arr = receiptDict[index]; // Get the last row based on the index
+    const last_row_arr = tempDict[index]; // Get the last row based on the index
     if (doesRowContainEnd(last_row_arr)) { // Check if the row contains the "Summe" keyword
-        delete receiptDict[index]; // Delete the row if it contains the end keyword
+        delete tempDict[index]; // Delete the row if it contains the end keyword
     }
 
-    return receiptDict; // Return the updated dictionary without the "Summe" row
+    return tempDict; // Return the updated dictionary without the "Summe" row
 }

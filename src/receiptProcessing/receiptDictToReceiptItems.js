@@ -1,6 +1,8 @@
 import { ReceiptItem } from "./receiptModel.js";
 import { convertToNumber, concatenatItemNameString } from "./utilities.js";
 
+//TODO refactoring the entire creation of receipt items, to make it more readable and maintainable
+
 /**
  * Creates receipt items from the processed Lidl/Edeka receipt dictionary.
  * @param {Object} receiptOnlyItemsDict - Dictionary of receipt items after filtering.
@@ -30,7 +32,8 @@ export function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
             if (pfandrückgabe_row){
                 const name= "Pfandrückgabe";
                 const single_price = convertToNumber(last_elem);
-                const amount = Number((last_total_price / single_price).toFixed(2));
+                // Calculate the amount of Pfandrückgabe items, using abs because the total price is negative
+                const amount = Number((Math.abs(last_total_price) / single_price).toFixed(2));
                 const item = new ReceiptItem(convertToNumber(key),name,single_price,amount);
                 items.push(item);
                 pfandrückgabe_row = false;

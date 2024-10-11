@@ -3,9 +3,11 @@ import { cleanRows } from "./receiptDataCleaning.js";
 import { extractStore, extractDate, extractSum, extractDiscountRows } from "./receiptDataExtraction.js";
 import { cutReceipt, removeKgPriceRows, removeDiscountRows, removeSpecialInfoRows, removeSummeRow, applyDiscounts} from "./receiptDataManipulation.js";	
 import { createReceiptItemsKaufland, createReceiptItemsLidlEdeka, createReceiptItemsNetto } from "./receiptDictToReceiptItems.js";
-import { addCategories } from "../categoryMatching/fuzzyMatching.js";
+import { addCategories, addCategoriesWithBrainJS } from "../categoryMatching/fuzzyMatching.js";
 
 import { getDictLength } from "./utilities.js";
+
+import * as XLSX from 'xlsx';
 
 /**
  * Processes the receipt dictionary and extracts relevant information.
@@ -86,7 +88,7 @@ export function processReceiptItems(receipt) {
             break
         default:
             receiptItems = createReceiptItemsLidlEdeka(receiptOnlyItemsDict);
-            console.log("Store yet to be processed, using default method");
+            console.log("Store yet to be processed, using default function (Lidl/Edeka)");
     }
 
     if (receiptItems.length === 0) {
@@ -98,13 +100,50 @@ export function processReceiptItems(receipt) {
     receiptItems = applyDiscounts(receiptItems, receiptDiscount);
     console.log(receiptItems); 
 
-    addCategories(receiptItems);
+    //addCategories(receiptItems);
+    addCategoriesWithBrainJS(receiptItems);
+
+    // generateExcelFile(receiptItems, receipt.getId());
 
     // TODO
-    // Categories (fuzzy matching CHECK, possible weight adjustments), adding more possible identifiers to the categories
-    // Pfandrückgabe Lidl, ...(?) adjustment // CHECK for Lidl, waiting if there are also more stores with that logic
+    // Reading in the receipt example files and testing them automatically, also using that for the creation of the categories
+    // Using brain.js for the categorization, training it with the receipt examples
+    // Categories (fuzzy matching DONE, possible weight adjustments), adding more possible identifiers to the categories
+    // Refactoring the code, making it more modular, adding more comments, especially for receiptDictToReceiptItems.js
+    // Pfandrückgabe Lidl, ...(?) adjustment // DONE for Lidl, waiting if there are also more stores with that logic
+
     // Errors/Edge Cases
-    // Testing
+    // Testing (unit tests, integration tests)
 
     return receiptItems;
+}
+
+
+/**
+ * Generates an Excel file and fills one column with the 'name' property of objects in the array.
+ * @param {Array<Object>} dataArray - Array of objects with a 'name' property to fill in the first column of the Excel file.
+ * @param {string} fileName - The name of the generated Excel file.
+ */
+function generateExcelFile(dataArray, fileName) {
+    // Step 1: Create a new workbook and worksheet
+    const wb = XLSX.utils.book_new(); // Create a new workbook
+    const ws = XLSX.utils.aoa_to_sheet([]); // Create an empty worksheet
+
+    // Step 2: Fill the first column with the 'name' property from the objects in dataArray
+    dataArray.forEach((obj, index) => {
+        if (obj?.name) {
+            ws[`A${index + 1}`] = { t: 's', v: obj.name }; // Fill column A with the 'name' property
+        } else {
+            ws[`A${index + 1}`] = { t: 's', v: 'Unnamed' }; // Handle missing names with a default value
+        }
+    });
+
+    // Step 3: Set the range of the worksheet
+    ws['!ref'] = `A1:A${dataArray.length}`; // Set the range (from A1 to the last row with data)
+
+    // Step 4: Append the worksheet to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+
+    // Step 5: Generate a binary Excel file and trigger a download
+    XLSX.writeFile(wb, `${fileName}.xlsx`); // Export the workbook to a file
 }
