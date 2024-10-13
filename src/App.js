@@ -305,6 +305,7 @@ function App() {
             <Check onClick={handleUserConfirmationStoreAndDate} className="check-data-icon" />
           </div>
         )}
+        <div id="receipt-items"></div>
       </div>
     </div>
   );

@@ -104,8 +104,10 @@ export function processReceiptItems(receipt) {
     // Add the categories to the receipt items, mutates the receiptItems array
     addCategories(receiptItems);
 
-    generateExcelFile(receiptItems, receipt.getId());
+    // generateExcelFile(receiptItems, receipt.getId());
     
+    // Call function to add the items to the page
+    addReceiptItemsToPage(receiptItems);
 
     // TODO
     // Reading in the receipt example files and testing them automatically, also using that for the creation of the categories
@@ -149,4 +151,68 @@ function generateExcelFile(dataArray, fileName) {
 
     // Step 5: Generate a binary Excel file and trigger a download
     XLSX.writeFile(wb, `${fileName}.xlsx`); // Export the workbook to a file
+}
+
+/**
+ * Adds the receipt items as HTML elements to the page.
+ * @param {Array} receiptItems - Array of processed receipt items.
+ */
+function addReceiptItemsToPage(receiptItems) {
+    // Assuming there is a <div> with id="receipt-items" in the HTML
+    const receiptContainer = document.getElementById("receipt-items");
+
+    if (!receiptContainer) {
+        console.error("No container with id 'receipt-items' found in the DOM.");
+        return;
+    }
+
+    // Clear any existing items
+    receiptContainer.innerHTML = "";
+
+    // Variable to store the total sum
+    let totalSum = 0;
+
+    // Iterate over each receipt item and create an HTML element for it
+    receiptItems.forEach(item => {
+        // Create a new div element to represent each receipt item
+        const itemDiv = document.createElement("div");
+        itemDiv.classList.add("receipt-item");
+
+        // Example of item properties (adjust based on your structure)
+        const itemName = document.createElement("span");
+        itemName.classList.add("item-name");
+        itemName.textContent = `${item.name}`;
+
+        const itemQuantity = document.createElement("span");
+        itemQuantity.classList.add("item-quantity");
+        itemQuantity.textContent = ` | Menge: ${item.amount}`;
+
+        const itemPrice = document.createElement("span");
+        itemPrice.classList.add("item-price");
+        itemPrice.textContent = ` | Preis: ${item.price} €`;
+
+        // Add the total for this item to the overall total sum
+        totalSum += item.getTotal();
+
+        // Append item properties to the item div
+        itemDiv.appendChild(itemName);
+        itemDiv.appendChild(itemQuantity);
+        itemDiv.appendChild(itemPrice);
+
+        // Append the item div to the container
+        receiptContainer.appendChild(itemDiv);
+    });
+
+    // Create and append the total sum element
+    const totalDiv = document.createElement("div");
+    totalDiv.classList.add("receipt-total");
+
+    const totalText = document.createElement("span");
+    totalText.classList.add("total-text");
+    totalText.textContent = ` SUMME Berechnet: ${totalSum.toFixed(2)} €`;
+
+    totalDiv.appendChild(totalText);
+
+    // Append the total div to the container
+    receiptContainer.appendChild(totalDiv);
 }

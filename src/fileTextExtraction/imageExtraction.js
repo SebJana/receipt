@@ -58,7 +58,7 @@ function preprocessImage(img) {
     // TODO: Dynamic enhancement factor based on pic (range: 1,3 - 2)?
     enhanceContrast(canvas, ctx);
   
-    //autoDownloadCanvas(canvas, 'final-image.png');
+    autoDownloadCanvas(canvas, 'final-image.png');
   
     return canvas; // Return the preprocessed canvas
 }
@@ -131,14 +131,13 @@ function enhanceContrast(canvas, ctx, lowPercentile = 1, highPercentile = 99, co
   
 /**
  * Applies a Gaussian blur to the image to reduce noise.
- * @param {CanvasRenderingContext2D} ctx - The canvas context.nvas.
+ * @param {CanvasRenderingContext2D} ctx - The canvas context.
  * @param {number} radius - The radius of the blur (default is 1.0).
  */
 function applyGaussianBlur(ctx, radius = 1.0) {
-    ctx.filter = `blur(${radius}px)`; // Apply blur filter with the specified radius
-    ctx.drawImage(ctx.canvas, 0, 0);  // Redraw the image with blur applied
+    ctx.filter = `blur(${radius}px)`;
+    ctx.drawImage(ctx.canvas, 0, 0);
 }
-  
   
 /**
  * Converts an image on a canvas to grayscale.
@@ -201,4 +200,3 @@ function replaceColorRange(canvas, ctx, color, tolerance) {
     }  // Put the modified image data back onto the canvas
     ctx.putImageData(imageData, 0, 0);
 }
-  

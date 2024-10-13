@@ -2080,4 +2080,502 @@
 }, {
   "Item" : "Plattpfirsiche 500g",
   "Category" : "Obst"
+}, {
+  "Item" : "Gr. Joghurt Brombeer",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "GQ Laugenhrezel",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "lomateStrau. kg",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Gratinkäse ger.clas.",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Mortadella",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Weizenmehl Type 405",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Gutsherrentopf",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Colalimonade",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Edelstahltopfreinig.",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "Del .Kochhinterschin. 1,59 x ZZ",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Becel Vitai",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Bio Geh. Tomaten nat",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Cola Zero",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Energy Drink light 0,39% 2",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Seife Milch&Honig",
+  "Category" : "Hygiene"
+}, {
+  "Item" : "TomateStrau, kg",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Pizza Peperonisalami",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Hähnchenschinken XXI",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Fr.Eier.a. Bodenhal",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Vollk. Sandwi. Toast",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Bananen lose",
+  "Category" : "Obst"
+}, {
+  "Item" : "Porree",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Bioland Pastina",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Knollensellerie",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Speisekartoffeln",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "MSC Filet Ext. Kross",
+  "Category" : "Fisch"
+}, {
+  "Item" : "Pizza Speciale",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Gouda in ScheibenXXL",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Gutshurrenpastete",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Schlaysahne 30%",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Ehrmann Alm.Erdbeere",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Ehrmann Alm.Heidelb,",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Gef lüge lmortade 11a",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Protein Pudd,Schoko",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Bio Geh.Tomaten QOre.",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Hähnchen-Mini-Steaks",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Möhren 1kg",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Guldkrüstechen",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Dash Vol lwaschmittel",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "5. ‚anen kg",
+  "Category" : "Obst"
+}, {
+  "Item" : "T. teStrau. kg",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "\"attnektarinen",
+  "Category" : "Obst"
+}, {
+  "Item" : "’aprika rot, spitz",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Chicken Wings mild",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Pizzateig m. Sauce",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "QS Schinkenwürfel",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Premium Matjes Sylt",
+  "Category" : "Fisch"
+}, {
+  "Item" : "Grie, Joghurt Natur",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "GranaPadano am Stück",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Protein Pudd,Schokn",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Edelsalami geschnit.",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Gefl. Lyoner Pap/",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Bio Geh.Tom.Knobl,",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Thunf ischsteak",
+  "Category" : "Fisch"
+}, {
+  "Item" : "Coca Cola 1,251 1,49% 2°",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Kaffeefilter Gr.4",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "Hamburger vom Rind",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Gef lügelf iletroulade",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Mini Choco Softies",
+  "Category" : "Süßwaren"
+}, {
+  "Item" : "Kiwi Stk 0,29% 4",
+  "Category" : "Obst"
+}, {
+  "Item" : "Bio Zucchint",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "MSU See lachs paniert",
+  "Category" : "Fisch"
+}, {
+  "Item" : "Frühlingsrell. Hahn.",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Eierspalztie",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Kartoffels. F85sig 01",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Joghurt & Kirschen",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Gouda Sche iber",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Mini Rustbratwursi",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Jughurt & Heidelbeer",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Gef lüge!filetroulacle",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Kneb lauchbaguet Le",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Milchreis SChoKo 0,405 X Z",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Spaghetti 4009",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Fusil li",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Sitzhase Vollmilch",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "GU Laugenbrezei",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Kaisersenme |",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Puten-Geschnitze 165",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Hackfleisch gem. XXL",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Bio Kiwi",
+  "Category" : "Obst"
+}, {
+  "Item" : "Schink.-Croiss.",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Bio BB Quark mager 2509",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "BEL Topfen 500g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "BEL Butteralich a.F1.5009",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Suesskartoffeln",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Satsumas 1kg UKE",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Avocado vorgereift ST",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Nangos ST",
+  "Category" : "Obst"
+}, {
+  "Item" : "Rucola 1259",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Kraeuterseitlinge 1509",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Austernpilze 1509",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Kokoschips 1009 Chiquita",
+  "Category" : "Snacks"
+}, {
+  "Item" : "Chaepignon braun 400g UKE",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "/ Seagold 15 Fischstaebchen 4509",
+  "Category" : "Fisch"
+}, {
+  "Item" : "Z Kuechentuecher 4x64 BL",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "VW Eier BH 10ST",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "StardrinkColab?Zucker1x1,5L. FL",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Stardrink Zitrone 1x1,5L FL",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Albhof Bandnud. ZEi 5009",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Alpenhain Obazda sort.1259",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "GW Kartoffelsalat Essig-öl Ikg",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "AS Sandwich Weizen 7509",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "GL Edaser SHB HF3 4009",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Bio Tomaten gewuerzt sort.4009g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Xl Tomaten passiert 5009",
+  "Category" : "Konserven"
+}, {
+  "Item" : "SamnelNr. Metzgerei 7%",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Zitronen 5009 UKE",
+  "Category" : "Obst"
+}, {
+  "Item" : "Bananen Lose",
+  "Category" : "Obst"
+}, {
+  "Item" : "/. Böyer.Knoedelteig 7509",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "/% Bed.Abteilung",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "f Na.Fix Curry Geschnet.41",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "A Ka.Fix Auerstchengul.309",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "— Beste Ernte Pfiaumen 3959",
+  "Category" : "Konserven"
+}, {
+  "Item" : "2 Clarkys Pinienkerne 509",
+  "Category" : "Snacks"
+}, {
+  "Item" : "5 PB 2-Klingen Rusierset 20ST",
+  "Category" : "Hygiene"
+}, {
+  "Item" : "Kuechentuecher {x64 BL",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "Mi. Mi. Piz. Sc. Ma. sort. 360g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "SG Garnelen sort. ab 225g",
+  "Category" : "Fisch"
+}, {
+  "Item" : "Ferre Kinder Pingi 8x30g",
+  "Category" : "Süßwaren"
+}, {
+  "Item" : "All i.F. Smooth. sortiert 250ml",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Set. Wok Mix sort. 180g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Carat gefr. getr. Zwiebeln 35g x2",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "GL H-Milch 1,5% HF 3 1L",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Bio Hokkaido Kuerbis lose ",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Lachsfilet mit Haut 300g",
+  "Category" : "Fisch"
+}, {
+  "Item" : "Bio BB Quark mager 250g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "BGL Topfen 500g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "BGL Buttermilch n. Fl. 500g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Süßkartoffeln",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Satsumas 1kg",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Mangos ST",
+  "Category" : "Obst"
+}, {
+  "Item" : "Kräuterseitlinge 150g",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Austernpilze 150g",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Kokoschips 100g Chiquita",
+  "Category" : "Snacks"
+}, {
+  "Item" : "Champignon braun 400g",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Seagold 15 Fischstäbchen 450g",
+  "Category" : "Fisch"
+}, {
+  "Item" : "Küchentücher 4x64 BL",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "Stardrink Cola 0% Zucker 1x1,5L FL",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Albhof Bandnudeln 2Ei 500g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Alpenhain Obazda sort. 125g",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "GW Kartoffelsalat Essig-Öl 1kg",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "GL Edamer SHB HF3 400g",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Bio Tomaten gewürzt sort. 400g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "MI Tomaten passiert 500g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "SamenNr. Metzgerei 7%",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Zitronen 500g",
+  "Category" : "Obst"
+}, {
+  "Item" : "BE Stangenspargel 205g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Vegola Rapsöl 1L",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Red Bull Sugarfree 1x0,355L DS",
+  "Category" : "Getränke"
+}, {
+  "Item" : "BB Reis-Maisw. sort. 130g",
+  "Category" : "Snacks"
+}, {
+  "Item" : "Coca-Cola 1x1,25L FL",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Spitzpaprika Rot 500g",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Bio Kräutertee 40g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Kiwi Gold ST",
+  "Category" : "Obst"
+}, {
+  "Item" : "JAC. Auslese klass. 500g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Bayer. Knoedelteig 750g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Bed. Abteilung",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Ma. Fix Curry Geschnet. 41g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Ma. Fix Würstchengul. 30g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Beste Ernte Pflaumen 395g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "BE Apfelmus o Zuckerz. 710g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "BioKraeuter/Chia sort. 40g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Clarkys Pinienkerne 50g",
+  "Category" : "Snacks"
+}, {
+  "Item" : "P&B 2-Klingen Rasierset 20ST",
+  "Category" : "Hygiene"
+}, {
+  "Item" : "Carat gefr. Petersilie 15g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Kuechentuecher 4x64 BL",
+  "Category" : "Haushalt"
 } ]
