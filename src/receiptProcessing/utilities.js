@@ -34,7 +34,7 @@ export function removeRowsMatchedWithValues(receiptDict, possibleValues) {
 export function getPossibleStores() {
     return {
         "Kaufland": ["Kaufland", "KAUFLAND", "KLC", "Bergsteig", "09621/78260"],
-        "Lidl": ["Lidl", "LIDL", "Barbarastr", "Hirschauer", "L4DL", "L$DE", "Lid)", "Li1dl", "Lıdl"],
+        "Lidl": ["Lidl", "LIDL", "Barbarastr", "Hirschauer", "Infanterie", "L4DL", "L$DE", "Lid)", "Li1dl", "Lıdl"],
         "Netto": ["Netto", "NETTO", "Mosacher", "Deutschlandcard", "Marken-Discount"],
         "Edeka": ["Edeka", "EDEKA", "Wiesmeth", "Pfistermeisterstr", "G&G", "Kuhnert"],
         "Aldi": ["Aldi", "ALDI"],
@@ -74,7 +74,7 @@ export function getPossibleStarts() {
  * @returns {Array} - Array of possible receipt end strings.
  */
 export function getPossibleEnds() {
-    return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen", "zahlen.", "SUNNE"];
+    return ["SUMME", "Summe", "zu zahlen", "Zu Zahlen", "Zahlen", "zahlen", "zahlen.", "zählen", "SUNNE"];
 }
 
 /**

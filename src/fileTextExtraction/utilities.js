@@ -9,6 +9,8 @@ export function arrToDict(receiptList) {
     for (let i = 0; i < receiptList.length; i++) {
       // Remove all line breaks (\n)
       receiptList[i] = receiptList[i].replace(/\n/g, "");
+      // Remove every €
+      receiptList[i] = receiptList[i].replace("€", "");
       // Replace everey "]"
       receiptList[i] = receiptList[i].replace("]", "l");
       // Replace everey ")"

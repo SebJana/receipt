@@ -1783,4 +1783,301 @@
 }, {
   "Item" : "ASC/MSC Sushi Box",
   "Category" : "Fisch"
+}, {
+  "Item" : "Pfand",
+  "Category" : "Leergut"
+}, {
+  "Item" : "Rapsöl",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Btl Reis-Mais.sori. 130g",
+  "Category" : "Snacks"
+}, {
+  "Item" : "Rich Knoblauchsauce 250ml",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Bar. Collaz. Castell. 500g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Haribo Sft Goldbaren 160g",
+  "Category" : "Süßwaren"
+}, {
+  "Item" : "M. gebratene Nudeln Huhn 121g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "BE Gewuerzg. 360g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Clarkys (Knabberei) 300g",
+  "Category" : "Snacks"
+}, {
+  "Item" : "Mueller FrBumi sort. 500g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Nuel. Knusperjog. sort. ab113g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Knusperjoghurt So.4 150g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Obstgarten Zero sort. 120g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Gefl. Gutsherrenbrwurstp. 200g",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Bio BB Zitronensaft 0,2L",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Barill. Sauce sort. 400g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Barill. Pesto sort. ab 190g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Hela CGK 500ml",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Niss. Cup Nud. / Huhn 63g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Karli Knusper Dinos 400gQS",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Froop sort. 150g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Stardri. Ora. 0% Zuck. EW 6x1,5L PK",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Stardri. Cola-Mix 0% 6x1,5L PK",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Aoste Stickado & Brot sort. ab 60g",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Haehnchenbrust 125g",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Bernb. Pasta. Tagliatelle 500g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Leergut 1,50 EUR EW",
+  "Category" : "Leergut"
+}, {
+  "Item" : "BO-Laugenbreze 1 ST",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "BO-Laugenstange Kaese 1 ST",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Kikkoerni. Mehrkornbrot 500g",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Clarkys Stapelchips Papr. 175g",
+  "Category" : "Snacks"
+}, {
+  "Item" : "Cl. Gebaeckstangen sort. 150g",
+  "Category" : "Snacks"
+}, {
+  "Item" : "Potato Pommes WS 1kg",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Clarkys Paprika Chips 200g",
+  "Category" : "Snacks"
+}, {
+  "Item" : "Muellermilch sort. 500ml",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Paula Mini Schoko 8x50g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "GL Sahne 30% 200g VLOG",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Putenbrust Paprika 100g",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Haehnchenbrustfilet 100g",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Pri. Zugb. muellbtl. 25x60L",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "PrivaBackpap. Zuschn. 30ST",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "Mon. Ital. Nudels. Bologn. 420g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "K. Fix Nat. Le. Nud. Schi. Auf. 40g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Maggi Fix Tomaten Bolognese 50g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "Ma. Fix Spaghetti Bolognese 36g",
+  "Category" : "Fertigprodukte"
+}, {
+  "Item" : "BE Pfefferonen sort. ab 135g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Booster Energy sort. 0,5L DS",
+  "Category" : "Getränke"
+}, {
+  "Item" : "Knorr Knoblauchsauce 250ml",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Mueller Milch sort. 400ml",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Protein Mousse Choc. 200g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "N.I. Mozzarella ger. 150g",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Iglo Schlemmerfilet sort. 380g",
+  "Category" : "Fisch"
+}, {
+  "Item" : "HM Putenbrust 150g",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Leergut 0,25 EUR EW",
+  "Category" : "Leergut"
+}, {
+  "Item" : "EW-Leergut 19%",
+  "Category" : "Leergut"
+}, {
+  "Item" : "EW-Leergut",
+  "Category" : "Leergut"
+}, {
+  "Item" : "Goesser Natur Radler 0.5L FL",
+  "Category" : "Getränke"
+}, {
+  "Item" : "MW-Pfand 0,08 EUR",
+  "Category" : "Leergut"
+}, {
+  "Item" : "Coca-Cola Zero 1x1,25L FL",
+  "Category" : "Getränke"
+}, {
+  "Item" : "EW-Pfand 0,25 EUR",
+  "Category" : "Leergut"
+}, {
+  "Item" : "GL H-Milch 1,5% 1L VL06",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Bio DB Mandelmilch ungesüßt 1L",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Biscotteria Schokokekssort. 125g",
+  "Category" : "Süßwaren"
+}, {
+  "Item" : "Haribo CRJ Chb sort. 175g",
+  "Category" : "Süßwaren"
+}, {
+  "Item" : "Milram Nuernberger herzhaft 150g",
+  "Category" : "Süßwaren"
+}, {
+  "Item" : "KW Weizenbroet. 8er 600g",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Biscotteria Doppelkekssort. 500g",
+  "Category" : "Süßwaren"
+}, {
+  "Item" : "Liebl Sahnepudding sort. 500g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "GL Naturjoghurt 4850g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "N.I. Mozzarella 0bt 125g",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "DMH Hefe fuer 500g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "GL Speisequark mager 500g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "GL Sahne 30% 200g VL06",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "Domspitz Schmand 24% 200g",
+  "Category" : "Milchprodukte"
+}, {
+  "Item" : "AS Sandwich Weizen 750g",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "BO Laugenbreze",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "Permanenttragetasche GRS ST",
+  "Category" : "Sonstiges"
+}, {
+  "Item" : "Apfel 2kg Herz für Erzeuger QS",
+  "Category" : "Obst"
+}, {
+  "Item" : "Rucola 125g",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Wiener 2x200g",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "KN Weizenbroet. 8er 560g",
+  "Category" : "Backwaren"
+}, {
+  "Item" : "P&B 2-Klingen Rasiererset 20ST",
+  "Category" : "Hygiene"
+}, {
+  "Item" : "Clarkys Trockenpflaumen 500g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "BioKraeuter/Chili sort. 40g",
+  "Category" : "Grundnahrungsmittel"
+}, {
+  "Item" : "Fevora Topa P4 10x200BL",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "Taschentuecher Box 100ST",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "Einmalhandschuhe 1 100ST",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "BE Apfelmus o. Zuckerz. 710g",
+  "Category" : "Konserven"
+}, {
+  "Item" : "Priva Geschirrreiniger 6ST",
+  "Category" : "Haushalt"
+}, {
+  "Item" : "Corny Haferkraft Kakao 140g",
+  "Category" : "Süßwaren"
+}, {
+  "Item" : "GL Gouda jung HF3 SHB 400g",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "VL Eier BH 10ST",
+  "Category" : "Käse&Ei"
+}, {
+  "Item" : "Clarkys Walnusskerne 200g",
+  "Category" : "Snacks"
+}, {
+  "Item" : "SammelNr. Metzgerei",
+  "Category" : "Fleischprodukte"
+}, {
+  "Item" : "Aprikosen 1kg",
+  "Category" : "Obst"
+}, {
+  "Item" : "Grapefruit rose ST",
+  "Category" : "Obst"
+}, {
+  "Item" : "Rispentomaten",
+  "Category" : "Gemüse"
+}, {
+  "Item" : "Bananen Lose ",
+  "Category" : "Obst"
+}, {
+  "Item" : "Plattpfirsiche 500g",
+  "Category" : "Obst"
 } ]

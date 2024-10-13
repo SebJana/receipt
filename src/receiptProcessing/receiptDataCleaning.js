@@ -74,6 +74,8 @@ function cleanOcrErrorPatterns(receiptDict) {
         lastElement = lastElement
             .replace("+*A", "")
             .replace("+*B", "")
+            .replace("'A", "")
+            .replace("'B", "")
             .replace("*A", "")
             .replace("*B", "")
             .replace("+A", "")

@@ -23,6 +23,9 @@ export function addCategories(receiptItems) {
   // Loop through each item in the receipt
   for (const element of receiptItems) {
       let currentItemName = element.name;
+      
+      // Convert the item name to lowercase for case-insensitive matching, Edeka puts items in uppercase on their receipts
+      currentItemName = currentItemName.toLowerCase();
 
       // Initialize variables for tracking the best match
       let bestMatchingCategory = '';
@@ -118,8 +121,12 @@ function levenshteinDistance(str1, str2) {
 
 
 /*
+*
+*****************************************************************************************************************************************
 * The following code snippets are used in the training and prediction of a neural network for categorizing items.
 * Backlog, because the data is not sufficient for training the neural network yet
+*****************************************************************************************************************************************
+*
 */
 
 /**

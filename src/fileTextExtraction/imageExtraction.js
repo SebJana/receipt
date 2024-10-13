@@ -58,7 +58,7 @@ function preprocessImage(img) {
     // TODO: Dynamic enhancement factor based on pic (range: 1,3 - 2)?
     enhanceContrast(canvas, ctx);
   
-    // autoDownloadCanvas(canvas, 'final-image.png');
+    //autoDownloadCanvas(canvas, 'final-image.png');
   
     return canvas; // Return the preprocessed canvas
 }

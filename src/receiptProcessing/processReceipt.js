@@ -24,6 +24,8 @@ export function processReceiptDict(receiptDict) {
         throw new Error('Receipt text couldn’t be extracted');
     }
 
+    console.log(receiptDict);
+
     // Step 1: Clean the rows by removing irrelevant data (e.g., ' ' and '' elements)
     const cleanReceiptDict = cleanRows(receiptDict);
 
@@ -34,7 +36,6 @@ export function processReceiptDict(receiptDict) {
     // Step 3: Extract the relevant part of the receipt (items, prices, etc.)
     let relevantReceiptDict = cutReceipt(cleanReceiptDict);
     console.log(relevantReceiptDict);
-    // relevantReceiptDict = removeKgPriceRows(relevantReceiptDict);
  
     // Step 4: Extract the total sum from the receipt
     const receiptSum = extractSum(relevantReceiptDict);
@@ -93,24 +94,26 @@ export function processReceiptItems(receipt) {
 
     if (receiptItems.length === 0) {
         throw new Error('No Items found in the receipt.');
-    }
+    }   
 
     // Apply the discounts
     const receiptDiscount = extractDiscountRows(receiptDict);
-    receiptItems = applyDiscounts(receiptItems, receiptDiscount);
+    applyDiscounts(receiptItems, receiptDiscount);
     console.log(receiptItems); 
 
+    // Add the categories to the receipt items, mutates the receiptItems array
     addCategories(receiptItems);
 
-    // generateExcelFile(receiptItems, receipt.getId());
+    generateExcelFile(receiptItems, receipt.getId());
     
 
     // TODO
     // Reading in the receipt example files and testing them automatically, also using that for the creation of the categories
-    // Using brain.js for the categorization, training it with the receipt examples
     // Categories (fuzzy matching DONE, possible weight adjustments), adding more possible identifiers to the categories
     // Refactoring the code, making it more modular, adding more comments, especially for receiptDictToReceiptItems.js
     // Pfandrückgabe Lidl, ...(?) adjustment // DONE for Lidl, waiting if there are also more stores with that logic
+
+    // BACKLOG: imageExtraction (OCR) improvement, adding categories matching AI (brain.js)
 
     // Errors/Edge Cases
     // Testing (unit tests, integration tests)

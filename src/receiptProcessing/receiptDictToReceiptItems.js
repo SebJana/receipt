@@ -32,7 +32,7 @@ export function createReceiptItemsLidlEdeka(receiptOnlyItemsDict) {
             if (pfandrückgabe_row){
                 const name= "Pfandrückgabe";
                 const single_price = convertToNumber(last_elem);
-                // Calculate the amount of Pfandrückgabe items, using abs because the total price is negative
+                // Calculate the amount of Pfandrückgabe items, using abs() because the total price of the item is negative
                 const amount = Number((Math.abs(last_total_price) / single_price).toFixed(2));
                 const item = new ReceiptItem(convertToNumber(key),name,single_price,amount);
                 items.push(item);
